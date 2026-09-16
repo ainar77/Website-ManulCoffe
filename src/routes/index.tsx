@@ -8,6 +8,7 @@ import { BrandMark } from "@/components/manul/BrandMark";
 import { Header } from "@/components/manul/Header";
 import { LocationsSection } from "@/components/manul/LocationsSection";
 import { MenuSection } from "@/components/manul/MenuSection";
+import { ReservationDialog } from "@/components/manul/ReservationDialog";
 import { ReviewsSection } from "@/components/manul/ReviewsSection";
 import { SectionHeading } from "@/components/manul/SectionHeading";
 import { favorites, locations } from "@/data/manulcoffee";

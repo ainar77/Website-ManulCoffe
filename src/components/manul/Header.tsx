@@ -31,6 +31,7 @@ export function Header() {
           {links.map((link) => (
             <a key={link} href={`#${link.toLowerCase()}`} className="nav-link">{link}</a>
           ))}
+          <ReservationDialog trigger={<Button variant="light" size="lg">Reserve a Table</Button>} />
         </div>
         <Button variant="nav" size="iconLg" className="md:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
           {open ? <X /> : <Menu />}
@@ -41,6 +42,7 @@ export function Header() {
           {links.map((link) => (
             <a key={link} href={`#${link.toLowerCase()}`} className="border-b border-primary-foreground/10 py-4 text-lg text-primary-foreground" onClick={() => { setOpen(false); scrollTo(link.toLowerCase()); }}>{link}</a>
           ))}
+          <ReservationDialog trigger={<Button variant="light" size="xl" className="mt-4" onClick={() => setOpen(false)}>Reserve a Table</Button>} />
         </div>
       </div>
     </header>
