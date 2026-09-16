@@ -38,5 +38,6 @@ export function getSupabaseClient() {
     },
   });
 
+  
   return client;
 }
