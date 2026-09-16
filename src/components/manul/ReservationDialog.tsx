@@ -120,7 +120,7 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
                 Thank you, your table request has been sent. We'll confirm your reservation by email shortly.
               </DialogDescription>
             </DialogHeader>
-            <Button variant="hero" size="lg" onClick={() => handleOpenChange(false)}>Done</Button>
+            <Button variant="dark" size="lg" onClick={() => handleOpenChange(false)}>Done</Button>
           </div>
         ) : (
           <>
@@ -178,7 +178,7 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
                 </div>
               </div>
               {submitError && <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{submitError}</p>}
-              <Button type="submit" variant="hero" size="xl" disabled={submitting} className="mt-1 w-full">
+              <Button type="submit" variant="dark" size="xl" disabled={submitting} className="mt-1 w-full">
                 {submitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
                 {submitting ? "Sending your reservation…" : "Confirm reservation"}
               </Button>
