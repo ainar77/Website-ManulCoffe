@@ -22,6 +22,7 @@ const buttonVariants = cva(
         nav: "text-primary-foreground hover:bg-primary-foreground/10",
         filter: "border border-border bg-transparent text-foreground hover:border-foreground",
         filterActive: "border border-coffee bg-coffee text-primary-foreground",
+        dark: "bg-coffee text-primary-foreground hover:bg-coffee-soft",
       },
       size: {
         default: "h-9 px-4 py-2",
