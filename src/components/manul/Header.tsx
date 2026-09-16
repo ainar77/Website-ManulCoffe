@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "./BrandMark";
+import { ReservationDialog } from "./ReservationDialog";
 
 const links = ["Menu", "Locations", "Reviews", "Contacts"];
 
