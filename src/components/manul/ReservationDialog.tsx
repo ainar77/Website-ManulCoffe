@@ -22,6 +22,7 @@ interface FormState {
 const emptyForm: FormState = { customerName: "", email: "", phone: "", location: "", date: "", time: "", guests: "2" };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneDigitsPattern = /^\d{8}$/;
 
 function todayString() {
   const now = new Date();
@@ -29,6 +30,10 @@ function todayString() {
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function sanitizePhoneDigits(value: string): string {
+  return value.replace(/\D/g, "").slice(0, 8);
 }
 
 export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
@@ -45,12 +50,17 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
     setSubmitError(null);
   };
 
+  const updatePhone = (raw: string) => {
+    update("phone", sanitizePhoneDigits(raw));
+  };
+
   const validate = (): boolean => {
     const next: Partial<Record<keyof FormState, string>> = {};
     if (!form.customerName.trim()) next.customerName = "Please enter your name.";
     if (!form.email.trim()) next.email = "Please enter your email.";
     else if (!emailPattern.test(form.email.trim())) next.email = "Please enter a valid email address.";
-    if (!form.phone.trim()) next.phone = "Please enter your phone number.";
+    if (!form.phone) next.phone = "Please enter your phone number.";
+    else if (!phoneDigitsPattern.test(form.phone)) next.phone = "Please enter exactly 8 digits.";
     if (!form.location) next.location = "Please choose a location.";
     if (!form.date) next.date = "Please choose a date.";
     else if (form.date < todayString()) next.date = "Please choose a date that is not in the past.";
@@ -74,7 +84,7 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
         .insert({
           customer_name: form.customerName.trim(),
           email: form.email.trim(),
-          phone: form.phone.trim(),
+          phone: `+371${form.phone}`,
           location: form.location,
           reservation_date: form.date,
           reservation_time: form.time,
@@ -142,7 +152,25 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-phone">Phone</Label>
-                  <Input id="reservation-phone" type="tel" autoComplete="tel" placeholder="+371 ..." value={form.phone} onChange={(event) => update("phone", event.target.value)} aria-invalid={Boolean(errors.phone)} />
+                  <div className="flex overflow-hidden rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                    <span className="flex items-center border-r border-input bg-muted px-3 text-sm text-muted-foreground select-none">+371</span>
+                    <Input
+                      id="reservation-phone"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      placeholder="29123456"
+                      value={form.phone}
+                      onChange={(event) => updatePhone(event.target.value)}
+                      onPaste={(event) => {
+                        event.preventDefault();
+                        const text = event.clipboardData?.getData("text") ?? "";
+                        updatePhone(text);
+                      }}
+                      aria-invalid={Boolean(errors.phone)}
+                      className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                  </div>
                   {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
                 </div>
               </div>
