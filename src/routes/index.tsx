@@ -8,7 +8,6 @@ import { BrandMark } from "@/components/manul/BrandMark";
 import { Header } from "@/components/manul/Header";
 import { LocationsSection } from "@/components/manul/LocationsSection";
 import { MenuSection } from "@/components/manul/MenuSection";
-import { ReservationDialog } from "@/components/manul/ReservationDialog";
 import { ReviewsSection } from "@/components/manul/ReviewsSection";
 import { SectionHeading } from "@/components/manul/SectionHeading";
 import { favorites, locations } from "@/data/manulcoffee";
@@ -40,7 +39,7 @@ function Hero() {
       <h1 className="max-w-5xl font-display text-6xl font-semibold leading-[0.88] sm:text-8xl lg:text-[8rem]">ManulCoffee</h1>
       <div className="mt-7 grid gap-8 border-t border-primary-foreground/30 pt-7 md:grid-cols-[1fr_auto] md:items-end">
         <div><p className="font-display text-2xl sm:text-3xl">Coffee worth slowing down for.</p><p className="mt-3 max-w-lg text-sm leading-relaxed text-primary-foreground/70">Carefully sourced beans, thoughtful food, and warm rooms made for the rhythm of Riga.</p></div>
-        <div className="flex flex-wrap gap-3"><ReservationDialog trigger={<Button size="xl" variant="hero">Reserve a table</Button>} /><Button size="xl" variant="heroOutline" onClick={() => scrollTo("menu")}>View menu</Button><Button size="xl" variant="heroOutline" onClick={() => scrollTo("locations")}>Find a location</Button></div>
+        <div className="flex flex-wrap gap-3"><Button size="xl" variant="heroOutline" onClick={() => scrollTo("menu")}>View menu</Button><Button size="xl" variant="heroOutline" onClick={() => scrollTo("locations")}>Find a location</Button></div>
       </div>
       <a href="#favorites" aria-label="Scroll to seasonal selection" className="absolute bottom-4 right-5 hidden size-11 place-items-center rounded-full border border-primary-foreground/30 transition-colors hover:bg-primary-foreground/10 sm:grid"><ArrowDown className="size-4" /></a>
     </div>
