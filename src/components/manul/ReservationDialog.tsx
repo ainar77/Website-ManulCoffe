@@ -19,7 +19,7 @@ interface FormState {
   guests: string;
 }
 
-const emptyForm: FormState = { customerName: "", email: "", phone: "", location: "", date: "", time: "", guests: "2" };
+const emptyForm: FormState = { customerName: "", email: "", phone: "", location: "", date: "", time: "", guests: "" };
 
 const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const phoneDigitsPattern = /^\d{8}$/;
@@ -34,6 +34,10 @@ function todayString() {
 
 function sanitizePhoneDigits(value: string): string {
   return value.replace(/\D/g, "").slice(0, 8);
+}
+
+function sanitizeGuestValue(value: string): string {
+  return value.replace(/\D/g, "");
 }
 
 export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
@@ -54,6 +58,10 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
     update("phone", sanitizePhoneDigits(raw));
   };
 
+  const updateGuests = (raw: string) => {
+    update("guests", sanitizeGuestValue(raw));
+  };
+
   const validate = (): boolean => {
     const next: Partial<Record<keyof FormState, string>> = {};
     if (!form.customerName.trim()) next.customerName = "Please enter your name.";
@@ -66,7 +74,11 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
     else if (form.date < todayString()) next.date = "Please choose a date that is not in the past.";
     if (!form.time) next.time = "Please choose a time.";
     const guests = Number(form.guests);
-    if (!form.guests || Number.isNaN(guests) || guests < 1) next.guests = "At least 1 guest is required.";
+    if (!form.guests) {
+      next.guests = "Please enter the number of guests.";
+    } else if (Number.isNaN(guests) || !Number.isInteger(guests) || guests < 1 || guests > 8) {
+      next.guests = "Please enter a number of guests from 1 to 8.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -201,7 +213,7 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-guests">Guests</Label>
-                  <Input id="reservation-guests" type="number" min={1} max={20} inputMode="numeric" value={form.guests} onChange={(event) => update("guests", event.target.value)} aria-invalid={Boolean(errors.guests)} />
+                  <Input id="reservation-guests" type="number" min={1} max={8} step={1} inputMode="numeric" value={form.guests} onChange={(event) => updateGuests(event.target.value)} aria-invalid={Boolean(errors.guests)} />
                   {errors.guests && <p className="text-sm text-destructive">{errors.guests}</p>}
                 </div>
               </div>
