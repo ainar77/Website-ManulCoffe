@@ -21,7 +21,7 @@ interface FormState {
 
 const emptyForm: FormState = { customerName: "", email: "", phone: "", location: "", date: "", time: "", guests: "2" };
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const phoneDigitsPattern = /^\d{8}$/;
 
 function todayString() {
@@ -83,7 +83,7 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
         .from("reservations")
         .insert({
           customer_name: form.customerName.trim(),
-          email: form.email.trim(),
+          email: form.email.trim().toLowerCase(),
           phone: `+371${form.phone}`,
           location: form.location,
           reservation_date: form.date,
