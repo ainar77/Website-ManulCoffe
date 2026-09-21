@@ -19,6 +19,7 @@ import {
 const title = "ManulCoffee Admin";
 
 type Reservation = Database["public"]["Tables"]["reservations"]["Row"];
+type ReservationStatus = "pending" | "confirmed" | "cancelled";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -61,12 +62,38 @@ function sortReservations(rows: Reservation[]) {
   });
 }
 
+function isPending(status: string): status is "pending" {
+  return status === "pending";
+}
+
+function statusLabel(status: string) {
+  return status ? `${status.charAt(0).toUpperCase()}${status.slice(1)}` : status;
+}
+
+function statusBadgeClass(status: string) {
+  switch (status) {
+    case "confirmed":
+      return "bg-[var(--color-open)] text-white border-transparent hover:bg-[var(--color-open)]/90";
+    case "cancelled":
+      return "bg-[var(--color-closed)] text-white border-transparent hover:bg-[var(--color-closed)]/90";
+    default:
+      return "bg-[var(--color-accent)] text-[var(--color-accent-foreground)] border-transparent hover:bg-[var(--color-accent)]/90";
+  }
+}
+
 function AdminPage() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const sortedReservations = useMemo(
+    () => sortReservations(reservations),
+    [reservations]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +110,7 @@ function AdminPage() {
       setReady(true);
       setLoading(true);
       setError(null);
+      setUpdateError(null);
 
       const { data, error: supabaseError } = await getSupabaseClient()
         .from("reservations")
@@ -112,8 +140,30 @@ function AdminPage() {
     navigate({ to: "/admin/login", replace: true });
   }
 
-  const statusLabel = (status: string) =>
-    status ? `${status.charAt(0).toUpperCase()}${status.slice(1)}` : status;
+  async function updateStatus(id: string, status: ReservationStatus) {
+    setUpdatingId(id);
+    setUpdateError(null);
+
+    const { error: supabaseError } = await getSupabaseClient()
+      .from("reservations")
+      .update({ status })
+      .eq("id", id);
+
+    if (supabaseError) {
+      console.error("Failed to update reservation status:", supabaseError);
+      setUpdateError("We couldn't update the reservation status. Please try again.");
+    } else {
+      setReservations((prev) =>
+        sortReservations(
+          prev.map((reservation) =>
+            reservation.id === id ? { ...reservation, status } : reservation
+          )
+        )
+      );
+    }
+
+    setUpdatingId(null);
+  }
 
   return (
     <div className="min-h-svh bg-coffee">
@@ -149,13 +199,22 @@ function AdminPage() {
               </p>
             </div>
 
+            {updateError && (
+              <div
+                role="alert"
+                className="mb-4 rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive-foreground"
+              >
+                {updateError}
+              </div>
+            )}
+
             <Card className="overflow-hidden border-0 shadow-header">
               <CardHeader className="border-b border-border/60 bg-muted/30">
                 <CardTitle>All reservations</CardTitle>
                 <CardDescription>
                   {loading
                     ? "Loading reservations…"
-                    : `${reservations.length} reservation${reservations.length !== 1 ? "s" : ""} found`}
+                    : `${sortedReservations.length} reservation${sortedReservations.length !== 1 ? "s" : ""} found`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -174,7 +233,7 @@ function AdminPage() {
                       Try again
                     </Button>
                   </div>
-                ) : reservations.length === 0 ? (
+                ) : sortedReservations.length === 0 ? (
                   <div className="flex min-h-[16rem] items-center justify-center px-6 py-10 text-center">
                     <p className="text-sm text-muted-foreground">No reservations yet.</p>
                   </div>
@@ -191,67 +250,138 @@ function AdminPage() {
                             <TableHead>Location</TableHead>
                             <TableHead className="w-[80px]">Guests</TableHead>
                             <TableHead className="w-[110px]">Status</TableHead>
+                            <TableHead className="w-[200px]">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {reservations.map((reservation) => (
-                            <TableRow key={reservation.id}>
-                              <TableCell className="whitespace-nowrap font-medium">
-                                {formatDate(reservation.reservation_date)}
-                              </TableCell>
-                              <TableCell className="whitespace-nowrap">
-                                {formatTime(reservation.reservation_time)}
-                              </TableCell>
-                              <TableCell>{reservation.customer_name}</TableCell>
-                              <TableCell>
-                                <div className="flex flex-col gap-0.5 text-xs">
-                                  <span className="text-foreground">{reservation.email}</span>
-                                  <span className="text-muted-foreground">{reservation.phone}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>{reservation.location}</TableCell>
-                              <TableCell className="whitespace-nowrap">{reservation.guests}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary" className="capitalize">
-                                  {statusLabel(reservation.status)}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {sortedReservations.map((reservation) => {
+                            const isUpdating = updatingId === reservation.id;
+                            return (
+                              <TableRow key={reservation.id}>
+                                <TableCell className="whitespace-nowrap font-medium">
+                                  {formatDate(reservation.reservation_date)}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {formatTime(reservation.reservation_time)}
+                                </TableCell>
+                                <TableCell>{reservation.customer_name}</TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col gap-0.5 text-xs">
+                                    <span className="text-foreground">{reservation.email}</span>
+                                    <span className="text-muted-foreground">{reservation.phone}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>{reservation.location}</TableCell>
+                                <TableCell className="whitespace-nowrap">{reservation.guests}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant="secondary"
+                                    className={`capitalize ${statusBadgeClass(reservation.status)}`}
+                                  >
+                                    {statusLabel(reservation.status)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {isPending(reservation.status) ? (
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="default"
+                                        size="sm"
+                                        disabled={isUpdating}
+                                        onClick={() => updateStatus(reservation.id, "confirmed")}
+                                      >
+                                        {isUpdating ? (
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : null}
+                                        Confirm
+                                      </Button>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        disabled={isUpdating}
+                                        onClick={() => updateStatus(reservation.id, "cancelled")}
+                                      >
+                                        {isUpdating ? (
+                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : null}
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-muted-foreground">—</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
 
                     <div className="divide-y md:hidden">
-                      {reservations.map((reservation) => (
-                        <div key={reservation.id} className="p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="font-display text-lg font-semibold text-foreground">
-                                {formatDate(reservation.reservation_date)}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {formatTime(reservation.reservation_time)}
-                              </p>
+                      {sortedReservations.map((reservation) => {
+                        const isUpdating = updatingId === reservation.id;
+                        return (
+                          <div key={reservation.id} className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="font-display text-lg font-semibold text-foreground">
+                                  {formatDate(reservation.reservation_date)}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatTime(reservation.reservation_time)}
+                                </p>
+                              </div>
+                              <Badge
+                                variant="secondary"
+                                className={`capitalize ${statusBadgeClass(reservation.status)}`}
+                              >
+                                {statusLabel(reservation.status)}
+                              </Badge>
                             </div>
-                            <Badge variant="secondary" className="capitalize">
-                              {statusLabel(reservation.status)}
-                            </Badge>
+                            <dl className="mt-3 grid grid-cols-[5rem_1fr] gap-x-3 gap-y-2 text-sm">
+                              <dt className="text-muted-foreground">Customer</dt>
+                              <dd className="font-medium text-foreground">{reservation.customer_name}</dd>
+                              <dt className="text-muted-foreground">Email</dt>
+                              <dd className="break-all text-foreground">{reservation.email}</dd>
+                              <dt className="text-muted-foreground">Phone</dt>
+                              <dd className="text-foreground">{reservation.phone}</dd>
+                              <dt className="text-muted-foreground">Location</dt>
+                              <dd className="text-foreground">{reservation.location}</dd>
+                              <dt className="text-muted-foreground">Guests</dt>
+                              <dd className="text-foreground">{reservation.guests}</dd>
+                            </dl>
+                            {isPending(reservation.status) && (
+                              <div className="mt-4 flex items-center gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="flex-1"
+                                  disabled={isUpdating}
+                                  onClick={() => updateStatus(reservation.id, "confirmed")}
+                                >
+                                  {isUpdating ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : null}
+                                  Confirm
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="flex-1"
+                                  disabled={isUpdating}
+                                  onClick={() => updateStatus(reservation.id, "cancelled")}
+                                >
+                                  {isUpdating ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : null}
+                                  Cancel
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          <dl className="mt-3 grid grid-cols-[5rem_1fr] gap-x-3 gap-y-2 text-sm">
-                            <dt className="text-muted-foreground">Customer</dt>
-                            <dd className="font-medium text-foreground">{reservation.customer_name}</dd>
-                            <dt className="text-muted-foreground">Email</dt>
-                            <dd className="break-all text-foreground">{reservation.email}</dd>
-                            <dt className="text-muted-foreground">Phone</dt>
-                            <dd className="text-foreground">{reservation.phone}</dd>
-                            <dt className="text-muted-foreground">Location</dt>
-                            <dd className="text-foreground">{reservation.location}</dd>
-                            <dt className="text-muted-foreground">Guests</dt>
-                            <dd className="text-foreground">{reservation.guests}</dd>
-                          </dl>
-                        </div>
-                      ))}
+                        );
+                      }))
                     </div>
                   </>
                 )}
