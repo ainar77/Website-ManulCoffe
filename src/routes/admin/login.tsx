@@ -14,6 +14,8 @@ export const Route = createFileRoute("/admin/login")({
       { name: "description", content: "Sign in to the ManulCoffee admin area." },
       { property: "og:title", content: title },
       { property: "og:description", content: "Sign in to the ManulCoffee admin area." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
