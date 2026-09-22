@@ -116,10 +116,53 @@ function AdminPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
+  const [view, setView] = useState<ViewFilter>("all");
+  const [location, setLocation] = useState<string>("all");
+  const [search, setSearch] = useState("");
+
   const sortedReservations = useMemo(
     () => sortReservations(reservations),
     [reservations]
   );
+
+  const locations = useMemo(
+    () =>
+      Array.from(new Set(reservations.map((r) => r.location).filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [reservations]
+  );
+
+  const visibleReservations = useMemo(() => {
+    const today = todayIso();
+    const query = search.trim().toLowerCase();
+
+    return sortedReservations.filter((r) => {
+      if (view === "today" && r.reservation_date !== today) return false;
+      if (view === "upcoming" && (r.reservation_date < today || r.status === "cancelled"))
+        return false;
+      if (
+        (view === "pending" || view === "confirmed" || view === "cancelled") &&
+        r.status !== view
+      )
+        return false;
+
+      if (location !== "all" && r.location !== location) return false;
+
+      if (query) {
+        const haystack = [r.customer_name, r.email, r.phone]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+
+      return true;
+    });
+  }, [sortedReservations, view, location, search]);
+
+  const visiblePendingCount = visibleReservations.filter((r) => r.status === "pending").length;
+  const visibleConfirmedCount = visibleReservations.filter((r) => r.status === "confirmed").length;
 
   useEffect(() => {
     let cancelled = false;
