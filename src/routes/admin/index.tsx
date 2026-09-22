@@ -378,9 +378,13 @@ function AdminPage() {
                       Try again
                     </Button>
                   </div>
-                ) : sortedReservations.length === 0 ? (
+                ) : visibleReservations.length === 0 ? (
                   <div className="flex min-h-[16rem] items-center justify-center px-6 py-10 text-center">
-                    <p className="text-sm text-muted-foreground">No reservations yet.</p>
+                    <p className="text-sm text-muted-foreground">
+                      {sortedReservations.length === 0
+                        ? "No reservations yet."
+                        : "No reservations match the selected filters."}
+                    </p>
                   </div>
                 ) : (
                   <>
