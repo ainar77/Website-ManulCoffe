@@ -403,7 +403,7 @@ function AdminPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {sortedReservations.map((reservation) => {
+                          {visibleReservations.map((reservation) => {
                             const isUpdating = updatingId === reservation.id;
                             return (
                               <TableRow key={reservation.id}>
@@ -468,7 +468,7 @@ function AdminPage() {
                     </div>
 
                     <div className="divide-y md:hidden">
-                      {sortedReservations.map((reservation) => {
+                      {visibleReservations.map((reservation) => {
                         const isUpdating = updatingId === reservation.id;
                         return (
                           <div key={reservation.id} className="p-4">
