@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,31 @@ const emptyForm: FormState = { customerName: "", email: "", phone: "", location:
 
 const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const phoneDigitsPattern = /^\d{8}$/;
+const reservationTimes = [
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+  "18:00",
+  "18:30",
+  "19:00",
+  "19:30",
+  "20:00",
+  "20:30",
+  "21:00",
+];
 
 function todayString() {
   const now = new Date();
@@ -47,6 +72,9 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [unavailableTimes, setUnavailableTimes] = useState<string[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
 
   const update = (field: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -54,6 +82,58 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
     setSubmitError(null);
   };
 
+  const loadAvailability = useCallback(async (location: string, date: string) => {
+  if (!location || !date) {
+    setUnavailableTimes([]);
+    setAvailabilityError(null);
+    return;
+  }
+  setAvailabilityLoading(true);
+  setAvailabilityError(null);
+  try {
+    const { data, error } = await getSupabaseClient().rpc(
+      "get_unavailable_reservation_times",
+      {
+        p_location: location,
+        p_date: date,
+      }
+    );
+    if (error) {
+      console.error("Availability check failed:", error);
+      setUnavailableTimes([]);
+      setAvailabilityError(
+        "We couldn't check availability right now. Please try again."
+      );
+      return;
+    }
+    const times = (data ?? []).map((row) =>
+      String(row.reservation_time).slice(0, 5)
+    );
+    setUnavailableTimes(times);
+  } catch (unexpected) {
+    console.error("Availability check failed:", unexpected);
+    setUnavailableTimes([]);
+    setAvailabilityError(
+      "We couldn't check availability right now. Please try again."
+    );
+  } finally {
+    setAvailabilityLoading(false);
+  }
+}, []);
+useEffect(() => {
+  setForm((current) => ({
+    ...current,
+    time: "",
+  }));
+  if (!form.location || !form.date) {
+    setUnavailableTimes([]);
+    setAvailabilityError(null);
+    return;
+  }
+  void loadAvailability(form.location, form.date);
+}, [form.location, form.date, loadAvailability]);
+
+  
   const updatePhone = (raw: string) => {
     update("phone", sanitizePhoneDigits(raw));
   };
@@ -72,7 +152,12 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
     if (!form.location) next.location = "Please choose a location.";
     if (!form.date) next.date = "Please choose a date.";
     else if (form.date < todayString()) next.date = "Please choose a date that is not in the past.";
-    if (!form.time) next.time = "Please choose a time.";
+    if (!form.time) {
+      next.time = "Please choose a time.";
+    }
+    else if (unavailableTimes.includes(form.time)) {
+      next.time = "This reservation time is no longer available.";
+    }
     const guests = Number(form.guests);
     if (!form.guests) {
       next.guests = "Please enter the number of guests.";
@@ -104,10 +189,27 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
         });
 
       if (error) {
-        console.error("Reservation insert failed:", error);
-        setSubmitError("We couldn't save your reservation just now. Please try again in a moment.");
-        return;
-      }
+  console.error("Reservation insert failed:", error);
+
+  if (error.code === "23505") {
+    setSubmitError(
+      "That time was just booked by another guest. Please choose another available time."
+    );
+
+    setForm((current) => ({
+      ...current,
+      time: "",
+    }));
+
+    await loadAvailability(form.location, form.date);
+    return;
+  }
+
+  setSubmitError(
+    "We couldn't save your reservation just now. Please try again in a moment."
+  );
+  return;
+}
 
       setForm(emptyForm);
       setErrors({});
@@ -205,12 +307,79 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
                   <Label htmlFor="reservation-date">Date</Label>
                   <Input id="reservation-date" type="date" min={todayString()} value={form.date} onChange={(event) => update("date", event.target.value)} aria-invalid={Boolean(errors.date)} />
                   {errors.date && <p className="text-sm text-destructive">{errors.date}</p>}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="reservation-time">Time</Label>
-                  <Input id="reservation-time" type="time" value={form.time} onChange={(event) => update("time", event.target.value)} aria-invalid={Boolean(errors.time)} />
-                  {errors.time && <p className="text-sm text-destructive">{errors.time}</p>}
-                </div>
+                  
+ </div>
+                
+               <div className="grid gap-2">
+  <Label htmlFor="reservation-time">Time</Label>
+  <Select
+    value={form.time}
+    onValueChange={(value) => update("time", value)}
+    disabled={
+      !form.location ||
+      !form.date ||
+      availabilityLoading ||
+      Boolean(availabilityError)
+    }
+  >
+    <SelectTrigger
+      id="reservation-time"
+      aria-invalid={Boolean(errors.time)}
+    >
+      <SelectValue
+        placeholder={
+          availabilityLoading
+            ? "Checking times..."
+            : "Choose a time"
+        }
+      />
+    </SelectTrigger>
+
+    <SelectContent>
+      {reservationTimes.map((time) => {
+        const unavailable = unavailableTimes.includes(time);
+
+        return (
+          <SelectItem
+            key={time}
+            value={time}
+            disabled={unavailable}
+          >
+            {unavailable ? `${time} — Booked` : time}
+          </SelectItem>
+        );
+      })}
+    </SelectContent>
+  </Select>
+
+  {availabilityLoading && (
+    <p className="text-sm text-muted-foreground">
+      Checking available times...
+    </p>
+  )}
+
+  {availabilityError && (
+    <p className="text-sm text-destructive">
+      {availabilityError}
+    </p>
+  )}
+
+  {!availabilityLoading &&
+    !availabilityError &&
+    form.location &&
+    form.date &&
+    unavailableTimes.length === reservationTimes.length && (
+      <p className="text-sm text-destructive">
+        No reservation times are available for this date.
+      </p>
+    )}
+
+  {errors.time && (
+    <p className="text-sm text-destructive">{errors.time}</p>
+  )}
+                 
+  </div>
+                
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-guests">Guests</Label>
                   <Input id="reservation-guests" type="number" min={1} max={8} step={1} inputMode="numeric" value={form.guests} onChange={(event) => updateGuests(event.target.value)} aria-invalid={Boolean(errors.guests)} />
