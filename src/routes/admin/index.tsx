@@ -7,6 +7,14 @@ import { BrandMark } from "@/components/manul/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -81,6 +89,24 @@ function statusBadgeClass(status: string) {
   }
 }
 
+const VIEW_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "today", label: "Today" },
+  { value: "upcoming", label: "Upcoming" },
+  { value: "pending", label: "Pending" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "cancelled", label: "Cancelled" },
+] as const;
+
+type ViewFilter = (typeof VIEW_FILTERS)[number]["value"];
+
+function todayIso() {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 function AdminPage() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
@@ -90,10 +116,53 @@ function AdminPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
+  const [view, setView] = useState<ViewFilter>("all");
+  const [location, setLocation] = useState<string>("all");
+  const [search, setSearch] = useState("");
+
   const sortedReservations = useMemo(
     () => sortReservations(reservations),
     [reservations]
   );
+
+  const locations = useMemo(
+    () =>
+      Array.from(new Set(reservations.map((r) => r.location).filter(Boolean))).sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [reservations]
+  );
+
+  const visibleReservations = useMemo(() => {
+    const today = todayIso();
+    const query = search.trim().toLowerCase();
+
+    return sortedReservations.filter((r) => {
+      if (view === "today" && r.reservation_date !== today) return false;
+      if (view === "upcoming" && (r.reservation_date < today || r.status === "cancelled"))
+        return false;
+      if (
+        (view === "pending" || view === "confirmed" || view === "cancelled") &&
+        r.status !== view
+      )
+        return false;
+
+      if (location !== "all" && r.location !== location) return false;
+
+      if (query) {
+        const haystack = [r.customer_name, r.email, r.phone]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+
+      return true;
+    });
+  }, [sortedReservations, view, location, search]);
+
+  const visiblePendingCount = visibleReservations.filter((r) => r.status === "pending").length;
+  const visibleConfirmedCount = visibleReservations.filter((r) => r.status === "confirmed").length;
 
   useEffect(() => {
     let cancelled = false;
@@ -208,13 +277,89 @@ function AdminPage() {
               </div>
             )}
 
+            {!loading && !error && (
+              <div className="mb-6 space-y-4 rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 p-4">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Filter reservations">
+                  {VIEW_FILTERS.map((filter) => (
+                    <Button
+                      key={filter.value}
+                      type="button"
+                      size="sm"
+                      variant={view === filter.value ? "default" : "dark"}
+                      aria-pressed={view === filter.value}
+                      onClick={() => setView(filter.value)}
+                    >
+                      {filter.label}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="admin-search"
+                      className="mb-1.5 block text-xs uppercase tracking-wide text-primary-foreground/60"
+                    >
+                      Search
+                    </label>
+                    <Input
+                      id="admin-search"
+                      type="search"
+                      value={search}
+                      placeholder="Name, email or phone"
+                      onChange={(event) => setSearch(event.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="admin-location"
+                      className="mb-1.5 block text-xs uppercase tracking-wide text-primary-foreground/60"
+                    >
+                      Location
+                    </label>
+                    <Select value={location} onValueChange={setLocation}>
+                      <SelectTrigger id="admin-location" className="bg-background">
+                        <SelectValue placeholder="All locations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All locations</SelectItem>
+                        {locations.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-primary-foreground/70">
+                  <div className="flex gap-2">
+                    <dt>Showing</dt>
+                    <dd className="font-medium text-primary-foreground">
+                      {visibleReservations.length}
+                    </dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt>Pending</dt>
+                    <dd className="font-medium text-primary-foreground">{visiblePendingCount}</dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt>Confirmed</dt>
+                    <dd className="font-medium text-primary-foreground">{visibleConfirmedCount}</dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+
             <Card className="overflow-hidden border-0 shadow-header">
               <CardHeader className="border-b border-border/60 bg-muted/30">
-                <CardTitle>All reservations</CardTitle>
+                <CardTitle>Reservations</CardTitle>
                 <CardDescription>
                   {loading
                     ? "Loading reservations…"
-                    : `${sortedReservations.length} reservation${sortedReservations.length !== 1 ? "s" : ""} found`}
+                    : `${visibleReservations.length} reservation${visibleReservations.length !== 1 ? "s" : ""} shown`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -233,9 +378,13 @@ function AdminPage() {
                       Try again
                     </Button>
                   </div>
-                ) : sortedReservations.length === 0 ? (
+                ) : visibleReservations.length === 0 ? (
                   <div className="flex min-h-[16rem] items-center justify-center px-6 py-10 text-center">
-                    <p className="text-sm text-muted-foreground">No reservations yet.</p>
+                    <p className="text-sm text-muted-foreground">
+                      {sortedReservations.length === 0
+                        ? "No reservations yet."
+                        : "No reservations match the selected filters."}
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -254,7 +403,7 @@ function AdminPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {sortedReservations.map((reservation) => {
+                          {visibleReservations.map((reservation) => {
                             const isUpdating = updatingId === reservation.id;
                             return (
                               <TableRow key={reservation.id}>
@@ -319,7 +468,7 @@ function AdminPage() {
                     </div>
 
                     <div className="divide-y md:hidden">
-                      {sortedReservations.map((reservation) => {
+                      {visibleReservations.map((reservation) => {
                         const isUpdating = updatingId === reservation.id;
                         return (
                           <div key={reservation.id} className="p-4">
