@@ -73,9 +73,9 @@ function statusLabel(status: string) {
 function statusBadgeClass(status: string) {
   switch (status) {
     case "confirmed":
-      return "bg-[var(--color-open)] text-white border-transparent hover:bg-[var(--color-open)]/90";
+      return "bg-[var(--color-open)] text-primary-foreground border-transparent hover:bg-[var(--color-open)]/90";
     case "cancelled":
-      return "bg-[var(--color-closed)] text-white border-transparent hover:bg-[var(--color-closed)]/90";
+      return "bg-[var(--color-closed)] text-primary-foreground border-transparent hover:bg-[var(--color-closed)]/90";
     default:
       return "bg-[var(--color-accent)] text-[var(--color-accent-foreground)] border-transparent hover:bg-[var(--color-accent)]/90";
   }
@@ -381,7 +381,7 @@ function AdminPage() {
                             )}
                           </div>
                         );
-                      }))
+                      })}
                     </div>
                   </>
                 )}
