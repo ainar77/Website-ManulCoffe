@@ -277,13 +277,89 @@ function AdminPage() {
               </div>
             )}
 
+            {!loading && !error && (
+              <div className="mb-6 space-y-4 rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 p-4">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Filter reservations">
+                  {VIEW_FILTERS.map((filter) => (
+                    <Button
+                      key={filter.value}
+                      type="button"
+                      size="sm"
+                      variant={view === filter.value ? "default" : "dark"}
+                      aria-pressed={view === filter.value}
+                      onClick={() => setView(filter.value)}
+                    >
+                      {filter.label}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="admin-search"
+                      className="mb-1.5 block text-xs uppercase tracking-wide text-primary-foreground/60"
+                    >
+                      Search
+                    </label>
+                    <Input
+                      id="admin-search"
+                      type="search"
+                      value={search}
+                      placeholder="Name, email or phone"
+                      onChange={(event) => setSearch(event.target.value)}
+                      className="bg-background"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="admin-location"
+                      className="mb-1.5 block text-xs uppercase tracking-wide text-primary-foreground/60"
+                    >
+                      Location
+                    </label>
+                    <Select value={location} onValueChange={setLocation}>
+                      <SelectTrigger id="admin-location" className="bg-background">
+                        <SelectValue placeholder="All locations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All locations</SelectItem>
+                        {locations.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-primary-foreground/70">
+                  <div className="flex gap-2">
+                    <dt>Showing</dt>
+                    <dd className="font-medium text-primary-foreground">
+                      {visibleReservations.length}
+                    </dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt>Pending</dt>
+                    <dd className="font-medium text-primary-foreground">{visiblePendingCount}</dd>
+                  </div>
+                  <div className="flex gap-2">
+                    <dt>Confirmed</dt>
+                    <dd className="font-medium text-primary-foreground">{visibleConfirmedCount}</dd>
+                  </div>
+                </dl>
+              </div>
+            )}
+
             <Card className="overflow-hidden border-0 shadow-header">
               <CardHeader className="border-b border-border/60 bg-muted/30">
-                <CardTitle>All reservations</CardTitle>
+                <CardTitle>Reservations</CardTitle>
                 <CardDescription>
                   {loading
                     ? "Loading reservations…"
-                    : `${sortedReservations.length} reservation${sortedReservations.length !== 1 ? "s" : ""} found`}
+                    : `${visibleReservations.length} reservation${visibleReservations.length !== 1 ? "s" : ""} shown`}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
