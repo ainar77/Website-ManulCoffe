@@ -115,6 +115,7 @@ function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [notificationError, setNotificationError] = useState<string | null>(null);
 
   const [view, setView] = useState<ViewFilter>("all");
   const [location, setLocation] = useState<string>("all");
@@ -210,29 +211,92 @@ function AdminPage() {
   }
 
   async function updateStatus(id: string, status: ReservationStatus) {
-    setUpdatingId(id);
-    setUpdateError(null);
+  setUpdatingId(id);
+  setUpdateError(null);
+  setNotificationError(null);
 
-    const { error: supabaseError } = await getSupabaseClient()
-      .from("reservations")
-      .update({ status })
-      .eq("id", id);
+  const reservation = reservations.find(
+    (reservation) => reservation.id === id
+  );
 
-    if (supabaseError) {
-      console.error("Failed to update reservation status:", supabaseError);
-      setUpdateError("We couldn't update the reservation status. Please try again.");
-    } else {
-      setReservations((prev) =>
-        sortReservations(
-          prev.map((reservation) =>
-            reservation.id === id ? { ...reservation, status } : reservation
-          )
-        )
-      );
-    }
+  if (!reservation) {
+    console.error("Reservation not found:", id);
+    setUpdateError("We couldn't find this reservation.");
+    setUpdatingId(null);
+    return;
+  }
+
+  const { error: supabaseError } = await getSupabaseClient()
+    .from("reservations")
+    .update({ status })
+    .eq("id", id);
+
+  if (supabaseError) {
+    console.error(
+      "Failed to update reservation status:",
+      supabaseError
+    );
+
+    setUpdateError(
+      "We couldn't update the reservation status. Please try again."
+    );
 
     setUpdatingId(null);
+    return;
   }
+
+  // Database update succeeded.
+  setReservations((prev) =>
+    sortReservations(
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, status }
+          : item
+      )
+    )
+  );
+
+  // Email is a secondary action.
+  try {
+    const { error: emailError } =
+      await getSupabaseClient().functions.invoke(
+        "send-reservation-status-email",
+        {
+          body: {
+            customerName: reservation.customer_name,
+            email: reservation.email,
+            location: reservation.location,
+            date: reservation.reservation_date,
+            time: reservation.reservation_time,
+            guests: reservation.guests,
+            status,
+          },
+        }
+      );
+
+    if (emailError) {
+      console.error(
+        "Reservation status email failed:",
+        emailError
+      );
+
+      setNotificationError(
+        "The reservation status was updated, but the customer notification email could not be sent."
+      );
+    }
+  } catch (emailUnexpected) {
+    console.error(
+      "Reservation status email failed:",
+      emailUnexpected
+    );
+
+    setNotificationError(
+      "The reservation status was updated, but the customer notification email could not be sent."
+    );
+  }
+
+  setUpdatingId(null);
+}
 
   return (
     <div className="min-h-svh bg-coffee">
@@ -276,6 +340,15 @@ function AdminPage() {
                 {updateError}
               </div>
             )}
+
+            {notificationError && (
+  <div
+    role="alert"
+    className="mb-4 rounded-sm border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 p-3 text-sm text-primary-foreground"
+  >
+    {notificationError}
+  </div>
+)}
 
             {!loading && !error && (
               <div className="mb-6 space-y-4 rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 p-4">
