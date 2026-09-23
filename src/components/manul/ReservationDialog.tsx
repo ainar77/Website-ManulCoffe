@@ -211,7 +211,6 @@ useEffect(() => {
   return;
 }
 
-console.log("STEP 1: reservation saved, starting email function");
       
       try {
   const { error: emailError } = await getSupabaseClient().functions.invoke(
@@ -229,7 +228,6 @@ console.log("STEP 1: reservation saved, starting email function");
     }
   );
 
- console.log("STEP 2: email function returned", { emailError });
         
   if (emailError) {
     console.error("Reservation email failed:", emailError);
