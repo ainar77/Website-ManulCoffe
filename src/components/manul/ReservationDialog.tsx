@@ -211,6 +211,29 @@ useEffect(() => {
   return;
 }
 
+      try {
+  const { error: emailError } = await getSupabaseClient().functions.invoke(
+    "send-reservation-email",
+    {
+      body: {
+        customerName: form.customerName.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: `+371${form.phone}`,
+        location: form.location,
+        date: form.date,
+        time: form.time,
+        guests: Number(form.guests),
+      },
+    }
+  );
+
+  if (emailError) {
+    console.error("Reservation email failed:", emailError);
+  }
+} catch (emailUnexpected) {
+  console.error("Reservation email failed:", emailUnexpected);
+}
+      
       setForm(emptyForm);
       setErrors({});
       setSuccess(true);
