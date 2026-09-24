@@ -203,16 +203,16 @@ async function handleAddItem(
     await getSupabaseClient()
       .from("menu_items")
       .insert({
-  name,
-  description: description || null,
-  price,
-  category: form.category,
-  subcategory: form.subcategory || null,
-  dietary_tags: form.dietary_tags,
-  sort_order: sortOrder,
-  is_available: form.is_available,
-  is_featured: form.is_featured,
-})
+        name,
+        description: description || null,
+        price,
+        category: form.category,
+        subcategory: form.subcategory || null,
+        dietary_tags: form.dietary_tags,
+        sort_order: sortOrder,
+        is_available: form.is_available,
+        is_featured: form.is_featured,
+      })
       .select()
       .single();
 
@@ -247,16 +247,6 @@ async function handleAddItem(
   setShowAddForm(false);
   setSaving(false);
 }
-  
-  {
-  setForm((current) => ({
-    ...current,
-    dietary_tags: current.dietary_tags.includes(tag)
-      ? current.dietary_tags.filter((item) => item !== tag)
-      : [...current.dietary_tags, tag],
-  }));
-}
-  
   return (
     <div className="min-h-svh bg-coffee">
       <header className="border-b border-primary-foreground/10 bg-coffee/95 backdrop-blur">
