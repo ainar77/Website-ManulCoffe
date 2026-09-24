@@ -1,11 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, X } from "lucide-react";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/supabase-types";
 import { BrandMark } from "@/components/manul/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -25,6 +34,32 @@ import {
 const title = "Menu — ManulCoffee Admin";
 
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
+const MENU_CATEGORIES = [
+  "Hot",
+  "Cold",
+  "Breakfast",
+  "Sweet Pastries",
+  "Savoury Pastries",
+] as const;
+
+const MENU_TAGS = [
+  "Popular",
+  "New",
+  "Vegan",
+  "Vegetarian",
+] as const;
+
+const emptyForm = {
+  name: "",
+  description: "",
+  price: "",
+  category: "Hot",
+  subcategory: "drinks",
+  dietary_tags: [] as string[],
+  sort_order: "0",
+  is_available: true,
+  is_featured: false,
+};
 
 export const Route = createFileRoute("/admin/menu")({
   head: () => ({
@@ -47,6 +82,10 @@ function AdminMenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +151,103 @@ function AdminMenuPage() {
 
   const hiddenCount = menuItems.length - availableCount;
 
+  function toggleTag(tag: string) 
+  async function handleAddItem(
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  setSaveError(null);
+
+  const name = form.name.trim();
+  const description = form.description.trim();
+  const price = Number(form.price);
+  const sortOrder = Number(form.sort_order);
+
+  if (!name) {
+    setSaveError("Item name is required.");
+    return;
+  }
+
+  if (
+    form.price.trim() === "" ||
+    !Number.isFinite(price) ||
+    price < 0
+  ) {
+    setSaveError("Enter a valid price.");
+    return;
+  }
+
+  if (
+    form.sort_order.trim() === "" ||
+    !Number.isInteger(sortOrder) ||
+    sortOrder < 0
+  ) {
+    setSaveError(
+      "Sort order must be a whole number of 0 or greater."
+    );
+    return;
+  }
+
+  setSaving(true);
+
+  const { data, error: supabaseError } =
+    await getSupabaseClient()
+      .from("menu_items")
+      .insert({
+        name,
+        description: description || null,
+        price,
+        category: form.category,
+        subcategory: form.subcategory || null,
+        dietary_tags: form.dietary_tags,
+        sort_order: sortOrder,
+        is_available: form.is_available,
+        is_featured: form.is_featured,
+      })
+      .select()
+      .single();
+
+  if (supabaseError || !data) {
+    console.error(
+      "Failed to create menu item:",
+      supabaseError
+    );
+
+    setSaveError(
+      "We couldn't add the menu item. Please try again."
+    );
+
+    setSaving(false);
+    return;
+  }
+
+  setMenuItems((current) =>
+    [...current, data].sort((a, b) => {
+      const categoryCompare =
+        a.category.localeCompare(b.category);
+
+      if (categoryCompare !== 0) {
+        return categoryCompare;
+      }
+
+      return a.sort_order - b.sort_order;
+    })
+  );
+
+  setForm(emptyForm);
+  setShowAddForm(false);
+  setSaving(false);
+}
+  {
+  setForm((current) => ({
+    ...current,
+    dietary_tags: current.dietary_tags.includes(tag)
+      ? current.dietary_tags.filter((item) => item !== tag)
+      : [...current.dietary_tags, tag],
+  }));
+}
+  
   return (
     <div className="min-h-svh bg-coffee">
       <header className="border-b border-primary-foreground/10 bg-coffee/95 backdrop-blur">
@@ -148,16 +284,290 @@ function AdminMenuPage() {
           </div>
         ) : (
           <>
-            <div className="mb-6 sm:mb-8">
-              <h1 className="font-display text-3xl font-semibold text-primary-foreground sm:text-4xl">
-                Menu
-              </h1>
+            <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 className="font-display text-3xl font-semibold text-primary-foreground sm:text-4xl">
+      Menu
+    </h1>
 
-              <p className="mt-1 text-sm text-primary-foreground/70">
-                Manage restaurant menu items and availability.
-              </p>
-            </div>
+    <p className="mt-1 text-sm text-primary-foreground/70">
+      Manage restaurant menu items and availability.
+    </p>
+  </div>
 
+  <Button
+    type="button"
+    onClick={() => {
+      setSaveError(null);
+      setShowAddForm((current) => !current);
+    }}
+  >
+    {showAddForm ? (
+      <X className="h-4 w-4" />
+    ) : (
+      <Plus className="h-4 w-4" />
+    )}
+
+    {showAddForm ? "Close" : "Add item"}
+  </Button>
+</div>
+
+      {showAddForm && (
+  <Card className="mb-6 border-0 shadow-header">
+    <CardHeader>
+      <CardTitle>Add menu item</CardTitle>
+      <CardDescription>
+        Create a new item for the restaurant menu.
+      </CardDescription>
+    </CardHeader>
+
+    <CardContent>
+      <form
+        onSubmit={handleAddItem}
+        className="space-y-5"
+      >
+        {saveError && (
+          <div
+            role="alert"
+            className="rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            {saveError}
+          </div>
+        )}
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="menu-name">
+              Name
+            </Label>
+
+            <Input
+              id="menu-name"
+              value={form.name}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
+              }
+              placeholder="Cappuccino"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="menu-price">
+              Price (€)
+            </Label>
+
+            <Input
+              id="menu-price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.price}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  price: event.target.value,
+                }))
+              }
+              placeholder="4.20"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="menu-description">
+            Description
+          </Label>
+
+          <Input
+            id="menu-description"
+            value={form.description}
+            disabled={saving}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                description: event.target.value,
+              }))
+            }
+            placeholder="Short description"
+          />
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label>Category</Label>
+
+            <Select
+              value={form.category}
+              disabled={saving}
+              onValueChange={(value) =>
+                setForm((current) => ({
+                  ...current,
+                  category: value,
+                  subcategory:
+                    value === "Hot" ||
+                    value === "Cold"
+                      ? "drinks"
+                      : "food",
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+
+              <SelectContent>
+                {MENU_CATEGORIES.map((category) => (
+                  <SelectItem
+                    key={category}
+                    value={category}
+                  >
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="menu-subcategory">
+              Subcategory
+            </Label>
+
+            <Input
+              id="menu-subcategory"
+              value={form.subcategory}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  subcategory: event.target.value,
+                }))
+              }
+              placeholder="drinks"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="menu-order">
+              Sort order
+            </Label>
+
+            <Input
+              id="menu-order"
+              type="number"
+              min="0"
+              step="1"
+              value={form.sort_order}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  sort_order: event.target.value,
+                }))
+              }
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Tags</Label>
+
+          <div className="flex flex-wrap gap-2">
+            {MENU_TAGS.map((tag) => {
+              const selected =
+                form.dietary_tags.includes(tag);
+
+              return (
+                <Button
+                  key={tag}
+                  type="button"
+                  size="sm"
+                  disabled={saving}
+                  variant={
+                    selected
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() => toggleTag(tag)}
+                >
+                  {tag}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-6">
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.is_available}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  is_available:
+                    event.target.checked,
+                }))
+              }
+            />
+
+            Available
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.is_featured}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  is_featured:
+                    event.target.checked,
+                }))
+              }
+            />
+
+            Featured
+          </label>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={saving}
+            onClick={() => {
+              setForm(emptyForm);
+              setSaveError(null);
+              setShowAddForm(false);
+            }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="submit"
+            disabled={saving}
+          >
+            {saving && (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            )}
+
+            Add item
+          </Button>
+        </div>
+      </form>
+    </CardContent>
+  </Card>
+)}
+            
             {!loading && !error && (
               <div className="mb-6 flex flex-wrap gap-3 text-sm">
                 <div className="rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 px-4 py-3 text-primary-foreground">
