@@ -1,20 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { LogOut, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/supabase-types";
 import { BrandMark } from "@/components/manul/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -24,279 +22,95 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const title = "ManulCoffee Admin";
+const title = "Menu — ManulCoffee Admin";
 
-type Reservation = Database["public"]["Tables"]["reservations"]["Row"];
-type ReservationStatus = "pending" | "confirmed" | "cancelled";
+type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
 
-export const Route = createFileRoute("/admin/")({
+export const Route = createFileRoute("/admin/menu")({
   head: () => ({
     meta: [
       { title },
-      { name: "description", content: "ManulCoffee admin area." },
-      { property: "og:title", content: title },
-      { property: "og:description", content: "ManulCoffee admin area." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      {
+        name: "description",
+        content: "Manage ManulCoffee menu.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AdminPage,
+  component: AdminMenuPage,
 });
 
-function formatDate(isoDate: string) {
-  const [yearStr, monthStr, dayStr] = isoDate.split("-");
-  const year = Number(yearStr);
-  const month = Number(monthStr);
-  const day = Number(dayStr);
-  if (!year || !month || !day) return isoDate;
-  const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatTime(time: string) {
-  return time.length > 5 ? time.slice(0, 5) : time;
-}
-
-function sortReservations(rows: Reservation[]) {
-  return [...rows].sort((a, b) => {
-    const dateCompare = a.reservation_date.localeCompare(b.reservation_date);
-    if (dateCompare !== 0) return dateCompare;
-    return a.reservation_time.localeCompare(b.reservation_time);
-  });
-}
-
-function isPending(status: string): status is "pending" {
-  return status === "pending";
-}
-
-function statusLabel(status: string) {
-  return status ? `${status.charAt(0).toUpperCase()}${status.slice(1)}` : status;
-}
-
-function statusBadgeClass(status: string) {
-  switch (status) {
-    case "confirmed":
-      return "bg-[var(--color-open)] text-primary-foreground border-transparent hover:bg-[var(--color-open)]/90";
-    case "cancelled":
-      return "bg-[var(--color-closed)] text-primary-foreground border-transparent hover:bg-[var(--color-closed)]/90";
-    default:
-      return "bg-[var(--color-accent)] text-[var(--color-accent-foreground)] border-transparent hover:bg-[var(--color-accent)]/90";
-  }
-}
-
-const VIEW_FILTERS = [
-  { value: "all", label: "All" },
-  { value: "today", label: "Today" },
-  { value: "upcoming", label: "Upcoming" },
-  { value: "pending", label: "Pending" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "cancelled", label: "Cancelled" },
-] as const;
-
-type ViewFilter = (typeof VIEW_FILTERS)[number]["value"];
-
-function todayIso() {
-  const now = new Date();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  const day = `${now.getDate()}`.padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
-}
-
-function AdminPage() {
+function AdminMenuPage() {
   const navigate = useNavigate();
+
   const [ready, setReady] = useState(false);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [updateError, setUpdateError] = useState<string | null>(null);
-  const [notificationError, setNotificationError] = useState<string | null>(null);
-
-  const [view, setView] = useState<ViewFilter>("all");
-  const [location, setLocation] = useState<string>("all");
-  const [search, setSearch] = useState("");
-
-  const sortedReservations = useMemo(
-    () => sortReservations(reservations),
-    [reservations]
-  );
-
-  const locations = useMemo(
-    () =>
-      Array.from(new Set(reservations.map((r) => r.location).filter(Boolean))).sort((a, b) =>
-        a.localeCompare(b)
-      ),
-    [reservations]
-  );
-
-  const visibleReservations = useMemo(() => {
-    const today = todayIso();
-    const query = search.trim().toLowerCase();
-
-    return sortedReservations.filter((r) => {
-      if (view === "today" && r.reservation_date !== today) return false;
-      if (view === "upcoming" && (r.reservation_date < today || r.status === "cancelled"))
-        return false;
-      if (
-        (view === "pending" || view === "confirmed" || view === "cancelled") &&
-        r.status !== view
-      )
-        return false;
-
-      if (location !== "all" && r.location !== location) return false;
-
-      if (query) {
-        const haystack = [r.customer_name, r.email, r.phone]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(query)) return false;
-      }
-
-      return true;
-    });
-  }, [sortedReservations, view, location, search]);
-
-  const visiblePendingCount = visibleReservations.filter((r) => r.status === "pending").length;
-  const visibleConfirmedCount = visibleReservations.filter((r) => r.status === "confirmed").length;
 
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      const { data: sessionData } = await getSupabaseClient().auth.getSession();
+    async function loadMenu() {
+      const { data: sessionData } =
+        await getSupabaseClient().auth.getSession();
+
       if (cancelled) return;
 
       if (!sessionData.session) {
-        navigate({ to: "/admin/login", replace: true });
+        navigate({
+          to: "/admin/login",
+          replace: true,
+        });
+
         return;
       }
 
       setReady(true);
       setLoading(true);
       setError(null);
-      setUpdateError(null);
 
-      const { data, error: supabaseError } = await getSupabaseClient()
-        .from("reservations")
-        .select("*");
+      const { data, error: supabaseError } =
+        await getSupabaseClient()
+          .from("menu_items")
+          .select("*")
+          .order("category", { ascending: true })
+          .order("sort_order", { ascending: true });
 
       if (cancelled) return;
 
       if (supabaseError || !data) {
-        console.error("Failed to load reservations:", supabaseError);
-        setError("We couldn't load the reservations. Please try again in a moment.");
-        setReservations([]);
+        console.error(
+          "Failed to load admin menu:",
+          supabaseError
+        );
+
+        setError(
+          "We couldn't load the menu. Please try again."
+        );
+
+        setMenuItems([]);
       } else {
-        setReservations(sortReservations(data));
+        setMenuItems(data);
       }
 
       setLoading(false);
     }
 
-    load();
+    loadMenu();
+
     return () => {
       cancelled = true;
     };
   }, [navigate]);
 
-  async function handleSignOut() {
-    await getSupabaseClient().auth.signOut();
-    navigate({ to: "/admin/login", replace: true });
-  }
-
-  async function updateStatus(id: string, status: ReservationStatus) {
-  setUpdatingId(id);
-  setUpdateError(null);
-  setNotificationError(null);
-
-  const reservation = reservations.find(
-    (reservation) => reservation.id === id
+  const availableCount = useMemo(
+    () =>
+      menuItems.filter((item) => item.is_available).length,
+    [menuItems]
   );
 
-  if (!reservation) {
-    console.error("Reservation not found:", id);
-    setUpdateError("We couldn't find this reservation.");
-    setUpdatingId(null);
-    return;
-  }
-
-  const { error: supabaseError } = await getSupabaseClient()
-    .from("reservations")
-    .update({ status })
-    .eq("id", id);
-
-  if (supabaseError) {
-    console.error(
-      "Failed to update reservation status:",
-      supabaseError
-    );
-
-    setUpdateError(
-      "We couldn't update the reservation status. Please try again."
-    );
-
-    setUpdatingId(null);
-    return;
-  }
-
-  // Database update succeeded.
-  setReservations((prev) =>
-    sortReservations(
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, status }
-          : item
-      )
-    )
-  );
-
-  // Email is a secondary action.
-  try {
-    const { error: emailError } =
-      await getSupabaseClient().functions.invoke(
-        "send-reservation-status-email",
-        {
-          body: {
-            customerName: reservation.customer_name,
-            email: reservation.email,
-            location: reservation.location,
-            date: reservation.reservation_date,
-            time: reservation.reservation_time,
-            guests: reservation.guests,
-            status,
-          },
-        }
-      );
-
-    if (emailError) {
-      console.error(
-        "Reservation status email failed:",
-        emailError
-      );
-
-      setNotificationError(
-        "The reservation status was updated, but the customer notification email could not be sent."
-      );
-    }
-  } catch (emailUnexpected) {
-    console.error(
-      "Reservation status email failed:",
-      emailUnexpected
-    );
-
-    setNotificationError(
-      "The reservation status was updated, but the customer notification email could not be sent."
-    );
-  }
-
-  setUpdatingId(null);
-}
+  const hiddenCount = menuItems.length - availableCount;
 
   return (
     <div className="min-h-svh bg-coffee">
@@ -304,13 +118,21 @@ function AdminPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-3">
             <BrandMark compact />
+
             <span className="font-display text-lg font-semibold text-primary-foreground">
               ManulCoffee Admin
             </span>
           </div>
-          <Button variant="dark" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Sign out</span>
+
+          <Button
+            variant="dark"
+            size="sm"
+            onClick={() =>
+              navigate({ to: "/admin" })
+            }
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Reservations
           </Button>
         </div>
       </header>
@@ -319,291 +141,219 @@ function AdminPage() {
         {!ready ? (
           <div className="flex min-h-[50svh] flex-col items-center justify-center gap-3 text-primary-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <p className="text-sm">Checking your session…</p>
+
+            <p className="text-sm">
+              Checking your session…
+            </p>
           </div>
         ) : (
           <>
             <div className="mb-6 sm:mb-8">
               <h1 className="font-display text-3xl font-semibold text-primary-foreground sm:text-4xl">
-                Reservations
+                Menu
               </h1>
+
               <p className="mt-1 text-sm text-primary-foreground/70">
-                Upcoming table reservations across both ManulCoffee locations.
+                Manage restaurant menu items and availability.
               </p>
             </div>
 
-            {updateError && (
-              <div
-                role="alert"
-                className="mb-4 rounded-sm border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive-foreground"
-              >
-                {updateError}
-              </div>
-            )}
-
-            {notificationError && (
-  <div
-    role="alert"
-    className="mb-4 rounded-sm border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 p-3 text-sm text-primary-foreground"
-  >
-    {notificationError}
-  </div>
-)}
-
             {!loading && !error && (
-              <div className="mb-6 space-y-4 rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 p-4">
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Filter reservations">
-                  {VIEW_FILTERS.map((filter) => (
-                    <Button
-                      key={filter.value}
-                      type="button"
-                      size="sm"
-                      variant={view === filter.value ? "default" : "dark"}
-                      aria-pressed={view === filter.value}
-                      onClick={() => setView(filter.value)}
-                    >
-                      {filter.label}
-                    </Button>
-                  ))}
+              <div className="mb-6 flex flex-wrap gap-3 text-sm">
+                <div className="rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 px-4 py-3 text-primary-foreground">
+                  Total:{" "}
+                  <strong>{menuItems.length}</strong>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="admin-search"
-                      className="mb-1.5 block text-xs uppercase tracking-wide text-primary-foreground/60"
-                    >
-                      Search
-                    </label>
-                    <Input
-                      id="admin-search"
-                      type="search"
-                      value={search}
-                      placeholder="Name, email or phone"
-                      onChange={(event) => setSearch(event.target.value)}
-                      className="bg-background"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="admin-location"
-                      className="mb-1.5 block text-xs uppercase tracking-wide text-primary-foreground/60"
-                    >
-                      Location
-                    </label>
-                    <Select value={location} onValueChange={setLocation}>
-                      <SelectTrigger id="admin-location" className="bg-background">
-                        <SelectValue placeholder="All locations" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All locations</SelectItem>
-                        {locations.map((item) => (
-                          <SelectItem key={item} value={item}>
-                            {item}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 px-4 py-3 text-primary-foreground">
+                  Available:{" "}
+                  <strong>{availableCount}</strong>
                 </div>
 
-                <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-primary-foreground/70">
-                  <div className="flex gap-2">
-                    <dt>Showing</dt>
-                    <dd className="font-medium text-primary-foreground">
-                      {visibleReservations.length}
-                    </dd>
-                  </div>
-                  <div className="flex gap-2">
-                    <dt>Pending</dt>
-                    <dd className="font-medium text-primary-foreground">{visiblePendingCount}</dd>
-                  </div>
-                  <div className="flex gap-2">
-                    <dt>Confirmed</dt>
-                    <dd className="font-medium text-primary-foreground">{visibleConfirmedCount}</dd>
-                  </div>
-                </dl>
+                <div className="rounded-sm border border-primary-foreground/10 bg-primary-foreground/5 px-4 py-3 text-primary-foreground">
+                  Hidden:{" "}
+                  <strong>{hiddenCount}</strong>
+                </div>
               </div>
             )}
 
             <Card className="overflow-hidden border-0 shadow-header">
               <CardHeader className="border-b border-border/60 bg-muted/30">
-                <CardTitle>Reservations</CardTitle>
+                <CardTitle>Menu items</CardTitle>
+
                 <CardDescription>
                   {loading
-                    ? "Loading reservations…"
-                    : `${visibleReservations.length} reservation${visibleReservations.length !== 1 ? "s" : ""} shown`}
+                    ? "Loading menu…"
+                    : `${menuItems.length} items`}
                 </CardDescription>
               </CardHeader>
+
               <CardContent className="p-0">
                 {loading ? (
                   <div className="flex min-h-[16rem] items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading reservations…
+                    Loading menu…
                   </div>
                 ) : error ? (
                   <div
                     role="alert"
-                    className="flex min-h-[16rem] flex-col items-center justify-center gap-4 px-6 py-10 text-center"
+                    className="flex min-h-[16rem] items-center justify-center px-6 py-10 text-center"
                   >
-                    <p className="max-w-md text-sm text-destructive">{error}</p>
-                    <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-                      Try again
-                    </Button>
-                  </div>
-                ) : visibleReservations.length === 0 ? (
-                  <div className="flex min-h-[16rem] items-center justify-center px-6 py-10 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      {sortedReservations.length === 0
-                        ? "No reservations yet."
-                        : "No reservations match the selected filters."}
+                    <p className="text-sm text-destructive">
+                      {error}
                     </p>
                   </div>
                 ) : (
                   <>
+                    {/* Desktop */}
                     <div className="hidden md:block">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[120px]">Date</TableHead>
-                            <TableHead className="w-[90px]">Time</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Contact</TableHead>
-                            <TableHead>Location</TableHead>
-                            <TableHead className="w-[80px]">Guests</TableHead>
-                            <TableHead className="w-[110px]">Status</TableHead>
-                            <TableHead className="w-[200px]">Actions</TableHead>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead>Tags</TableHead>
+                            <TableHead>Order</TableHead>
+                            <TableHead>Status</TableHead>
                           </TableRow>
                         </TableHeader>
+
                         <TableBody>
-                          {visibleReservations.map((reservation) => {
-                            const isUpdating = updatingId === reservation.id;
-                            return (
-                              <TableRow key={reservation.id}>
-                                <TableCell className="whitespace-nowrap font-medium">
-                                  {formatDate(reservation.reservation_date)}
-                                </TableCell>
-                                <TableCell className="whitespace-nowrap">
-                                  {formatTime(reservation.reservation_time)}
-                                </TableCell>
-                                <TableCell>{reservation.customer_name}</TableCell>
-                                <TableCell>
-                                  <div className="flex flex-col gap-0.5 text-xs">
-                                    <span className="text-foreground">{reservation.email}</span>
-                                    <span className="text-muted-foreground">{reservation.phone}</span>
-                                  </div>
-                                </TableCell>
-                                <TableCell>{reservation.location}</TableCell>
-                                <TableCell className="whitespace-nowrap">{reservation.guests}</TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant="secondary"
-                                    className={`capitalize ${statusBadgeClass(reservation.status)}`}
-                                  >
-                                    {statusLabel(reservation.status)}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell>
-                                  {isPending(reservation.status) ? (
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        variant="default"
-                                        size="sm"
-                                        disabled={isUpdating}
-                                        onClick={() => updateStatus(reservation.id, "confirmed")}
-                                      >
-                                        {isUpdating ? (
-                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        ) : null}
-                                        Confirm
-                                      </Button>
-                                      <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        disabled={isUpdating}
-                                        onClick={() => updateStatus(reservation.id, "cancelled")}
-                                      >
-                                        {isUpdating ? (
-                                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        ) : null}
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-muted-foreground">—</span>
+                          {menuItems.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">
+                                    {item.name}
+                                  </p>
+
+                                  {item.description && (
+                                    <p className="mt-0.5 max-w-md text-xs text-muted-foreground">
+                                      {item.description}
+                                    </p>
                                   )}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
+                                </div>
+                              </TableCell>
+
+                              <TableCell>
+                                {item.category}
+                              </TableCell>
+
+                              <TableCell className="whitespace-nowrap font-medium">
+                                €
+                                {Number(
+                                  item.price
+                                ).toFixed(2)}
+                              </TableCell>
+
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
+                                  {item.dietary_tags?.length
+                                    ? item.dietary_tags.map(
+                                        (tag) => (
+                                          <Badge
+                                            key={tag}
+                                            variant="secondary"
+                                          >
+                                            {tag}
+                                          </Badge>
+                                        )
+                                      )
+                                    : "—"}
+                                </div>
+                              </TableCell>
+
+                              <TableCell>
+                                {item.sort_order}
+                              </TableCell>
+
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    item.is_available
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
+                                  {item.is_available
+                                    ? "Available"
+                                    : "Hidden"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
                         </TableBody>
                       </Table>
                     </div>
 
+                    {/* Mobile */}
                     <div className="divide-y md:hidden">
-                      {visibleReservations.map((reservation) => {
-                        const isUpdating = updatingId === reservation.id;
-                        return (
-                          <div key={reservation.id} className="p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="font-display text-lg font-semibold text-foreground">
-                                  {formatDate(reservation.reservation_date)}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatTime(reservation.reservation_time)}
-                                </p>
-                              </div>
-                              <Badge
-                                variant="secondary"
-                                className={`capitalize ${statusBadgeClass(reservation.status)}`}
-                              >
-                                {statusLabel(reservation.status)}
-                              </Badge>
+                      {menuItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-4"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h2 className="font-display text-lg font-semibold">
+                                {item.name}
+                              </h2>
+
+                              <p className="text-sm text-muted-foreground">
+                                {item.category}
+                              </p>
                             </div>
-                            <dl className="mt-3 grid grid-cols-[5rem_1fr] gap-x-3 gap-y-2 text-sm">
-                              <dt className="text-muted-foreground">Customer</dt>
-                              <dd className="font-medium text-foreground">{reservation.customer_name}</dd>
-                              <dt className="text-muted-foreground">Email</dt>
-                              <dd className="break-all text-foreground">{reservation.email}</dd>
-                              <dt className="text-muted-foreground">Phone</dt>
-                              <dd className="text-foreground">{reservation.phone}</dd>
-                              <dt className="text-muted-foreground">Location</dt>
-                              <dd className="text-foreground">{reservation.location}</dd>
-                              <dt className="text-muted-foreground">Guests</dt>
-                              <dd className="text-foreground">{reservation.guests}</dd>
-                            </dl>
-                            {isPending(reservation.status) && (
-                              <div className="mt-4 flex items-center gap-2">
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  className="flex-1"
-                                  disabled={isUpdating}
-                                  onClick={() => updateStatus(reservation.id, "confirmed")}
-                                >
-                                  {isUpdating ? (
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  ) : null}
-                                  Confirm
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="flex-1"
-                                  disabled={isUpdating}
-                                  onClick={() => updateStatus(reservation.id, "cancelled")}
-                                >
-                                  {isUpdating ? (
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  ) : null}
-                                  Cancel
-                                </Button>
-                              </div>
-                            )}
+
+                            <Badge
+                              variant={
+                                item.is_available
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {item.is_available
+                                ? "Available"
+                                : "Hidden"}
+                            </Badge>
                           </div>
-                        );
-                      })}
+
+                          {item.description && (
+                            <p className="mt-3 text-sm text-muted-foreground">
+                              {item.description}
+                            </p>
+                          )}
+
+                          <div className="mt-3 flex items-center justify-between">
+                            <span className="font-semibold">
+                              €
+                              {Number(
+                                item.price
+                              ).toFixed(2)}
+                            </span>
+
+                            <span className="text-xs text-muted-foreground">
+                              Order: {item.sort_order}
+                            </span>
+                          </div>
+
+                          {item.dietary_tags?.length >
+                            0 && (
+                            <div className="mt-3 flex flex-wrap gap-1">
+                              {item.dietary_tags.map(
+                                (tag) => (
+                                  <Badge
+                                    key={tag}
+                                    variant="secondary"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                )
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </>
                 )}
