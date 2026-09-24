@@ -47,11 +47,12 @@ export function MenuSection() {
 
       const { data, error: supabaseError } =
         await getSupabaseClient()
-          .from("menu_items")
-          .select(
-            "id, name, description, price, category, dietary_tags, sort_order"
-          )
-          .order("sort_order", { ascending: true });
+    .from("menu_items")
+    .select(
+      "id, name, description, price, category, dietary_tags, sort_order"
+    )
+    .eq("is_available", true)
+    .order("sort_order", { ascending: true });
 
       if (cancelled) return;
 
