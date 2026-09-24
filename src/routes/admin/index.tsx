@@ -151,8 +151,16 @@ function AdminMenuPage() {
 
   const hiddenCount = menuItems.length - availableCount;
 
-  function toggleTag(tag: string) 
-  async function handleAddItem(
+function toggleTag(tag: string) {
+  setForm((current) => ({
+    ...current,
+    dietary_tags: current.dietary_tags.includes(tag)
+      ? current.dietary_tags.filter((item) => item !== tag)
+      : [...current.dietary_tags, tag],
+  }));
+}
+
+async function handleAddItem(
   event: React.FormEvent<HTMLFormElement>
 ) {
   event.preventDefault();
@@ -195,16 +203,16 @@ function AdminMenuPage() {
     await getSupabaseClient()
       .from("menu_items")
       .insert({
-        name,
-        description: description || null,
-        price,
-        category: form.category,
-        subcategory: form.subcategory || null,
-        dietary_tags: form.dietary_tags,
-        sort_order: sortOrder,
-        is_available: form.is_available,
-        is_featured: form.is_featured,
-      })
+  name,
+  description: description || null,
+  price,
+  category: form.category,
+  subcategory: form.subcategory || null,
+  dietary_tags: form.dietary_tags,
+  sort_order: sortOrder,
+  is_available: form.is_available,
+  is_featured: form.is_featured,
+})
       .select()
       .single();
 
@@ -239,6 +247,7 @@ function AdminMenuPage() {
   setShowAddForm(false);
   setSaving(false);
 }
+  
   {
   setForm((current) => ({
     ...current,
