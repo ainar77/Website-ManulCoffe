@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Plus, X } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Plus, X} from "lucide-react";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/supabase-types";
 import { BrandMark } from "@/components/manul/BrandMark";
@@ -86,6 +86,7 @@ function AdminMenuPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +152,29 @@ function AdminMenuPage() {
 
   const hiddenCount = menuItems.length - availableCount;
 
+function startEditing(item: MenuItem) {
+  setForm({
+    name: item.name,
+    description: item.description ?? "",
+    price: String(item.price),
+    category: item.category,
+    subcategory: item.subcategory ?? "",
+    dietary_tags: item.dietary_tags ?? [],
+    sort_order: String(item.sort_order),
+    is_available: item.is_available,
+    is_featured: item.is_featured,
+  });
+
+  setEditingItemId(item.id);
+  setSaveError(null);
+  setShowAddForm(true);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
+  
 function toggleTag(tag: string) {
   setForm((current) => ({
     ...current,
@@ -160,7 +184,7 @@ function toggleTag(tag: string) {
   }));
 }
 
-async function handleAddItem(
+async function handleSaveItem(
   event: React.FormEvent<HTMLFormElement>
 ) {
   event.preventDefault();
@@ -199,54 +223,99 @@ async function handleAddItem(
 
   setSaving(true);
 
-  const { data, error: supabaseError } =
-    await getSupabaseClient()
-      .from("menu_items")
-      .insert({
-        name,
-        description: description || null,
-        price,
-        category: form.category,
-        subcategory: form.subcategory || null,
-        dietary_tags: form.dietary_tags,
-        sort_order: sortOrder,
-        is_available: form.is_available,
-        is_featured: form.is_featured,
+  const itemData = {
+    name,
+    description: description || null,
+    price,
+    category: form.category,
+    subcategory: form.subcategory || null,
+    dietary_tags: form.dietary_tags,
+    sort_order: sortOrder,
+    is_available: form.is_available,
+    is_featured: form.is_featured,
+  };
+
+  if (editingItemId !== null) {
+    const { data, error: supabaseError } =
+      await getSupabaseClient()
+        .from("menu_items")
+        .update(itemData)
+        .eq("id", editingItemId)
+        .select()
+        .single();
+
+    if (supabaseError || !data) {
+      console.error(
+        "Failed to update menu item:",
+        supabaseError
+      );
+
+      setSaveError(
+        "We couldn't update the menu item. Please try again."
+      );
+
+      setSaving(false);
+      return;
+    }
+
+    setMenuItems((current) =>
+      current
+        .map((item) =>
+          item.id === editingItemId ? data : item
+        )
+        .sort((a, b) => {
+          const categoryCompare =
+            a.category.localeCompare(b.category);
+
+          if (categoryCompare !== 0) {
+            return categoryCompare;
+          }
+
+          return a.sort_order - b.sort_order;
+        })
+    );
+  } else {
+    const { data, error: supabaseError } =
+      await getSupabaseClient()
+        .from("menu_items")
+        .insert(itemData)
+        .select()
+        .single();
+
+    if (supabaseError || !data) {
+      console.error(
+        "Failed to create menu item:",
+        supabaseError
+      );
+
+      setSaveError(
+        "We couldn't add the menu item. Please try again."
+      );
+
+      setSaving(false);
+      return;
+    }
+
+    setMenuItems((current) =>
+      [...current, data].sort((a, b) => {
+        const categoryCompare =
+          a.category.localeCompare(b.category);
+
+        if (categoryCompare !== 0) {
+          return categoryCompare;
+        }
+
+        return a.sort_order - b.sort_order;
       })
-      .select()
-      .single();
-
-  if (supabaseError || !data) {
-    console.error(
-      "Failed to create menu item:",
-      supabaseError
     );
-
-    setSaveError(
-      "We couldn't add the menu item. Please try again."
-    );
-
-    setSaving(false);
-    return;
   }
 
-  setMenuItems((current) =>
-    [...current, data].sort((a, b) => {
-      const categoryCompare =
-        a.category.localeCompare(b.category);
-
-      if (categoryCompare !== 0) {
-        return categoryCompare;
-      }
-
-      return a.sort_order - b.sort_order;
-    })
-  );
-
   setForm(emptyForm);
+  setEditingItemId(null);
   setShowAddForm(false);
   setSaving(false);
 }
+    
   return (
     <div className="min-h-svh bg-coffee">
       <header className="border-b border-primary-foreground/10 bg-coffee/95 backdrop-blur">
@@ -295,11 +364,20 @@ async function handleAddItem(
   </div>
 
   <Button
-    type="button"
     onClick={() => {
-      setSaveError(null);
-      setShowAddForm((current) => !current);
-    }}
+  if (showAddForm) {
+    setShowAddForm(false);
+    setEditingItemId(null);
+    setForm(emptyForm);
+    setSaveError(null);
+    return;
+  }
+
+  setEditingItemId(null);
+  setForm(emptyForm);
+  setSaveError(null);
+  setShowAddForm(true);
+}}
   >
     {showAddForm ? (
       <X className="h-4 w-4" />
@@ -314,15 +392,22 @@ async function handleAddItem(
       {showAddForm && (
   <Card className="mb-6 border-0 shadow-header">
     <CardHeader>
-      <CardTitle>Add menu item</CardTitle>
-      <CardDescription>
-        Create a new item for the restaurant menu.
-      </CardDescription>
+      <CardTitle>
+  {editingItemId !== null
+    ? "Edit menu item"
+    : "Add menu item"}
+</CardTitle>
+
+<CardDescription>
+  {editingItemId !== null
+    ? "Update this menu item."
+    : "Create a new item for the restaurant menu."}
+</CardDescription>
     </CardHeader>
 
     <CardContent>
       <form
-        onSubmit={handleAddItem}
+        onSubmit={handleSaveItem}
         className="space-y-5"
       >
         {saveError && (
@@ -545,6 +630,7 @@ async function handleAddItem(
             onClick={() => {
               setForm(emptyForm);
               setSaveError(null);
+              setEditingItemId(null);
               setShowAddForm(false);
             }}
           >
@@ -559,7 +645,9 @@ async function handleAddItem(
               <Loader2 className="h-4 w-4 animate-spin" />
             )}
 
-            Add item
+            {editingItemId !== null
+            ? "Save changes"
+            : "Add item"}
           </Button>
         </div>
       </form>
@@ -625,74 +713,84 @@ async function handleAddItem(
                             <TableHead>Tags</TableHead>
                             <TableHead>Order</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead className="text-right">
+                              Actions
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
 
-                        <TableBody>
-                          {menuItems.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium">
-                                    {item.name}
-                                  </p>
+                       <TableBody>
+  {menuItems.map((item) => (
+    <TableRow key={item.id}>
+      <TableCell>
+        <div>
+          <p className="font-medium">
+            {item.name}
+          </p>
 
-                                  {item.description && (
-                                    <p className="mt-0.5 max-w-md text-xs text-muted-foreground">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </TableCell>
+          {item.description && (
+            <p className="mt-0.5 max-w-md text-xs text-muted-foreground">
+              {item.description}
+            </p>
+          )}
+        </div>
+      </TableCell>
 
-                              <TableCell>
-                                {item.category}
-                              </TableCell>
+      <TableCell>
+        {item.category}
+      </TableCell>
 
-                              <TableCell className="whitespace-nowrap font-medium">
-                                €
-                                {Number(
-                                  item.price
-                                ).toFixed(2)}
-                              </TableCell>
+      <TableCell className="whitespace-nowrap font-medium">
+        €{Number(item.price).toFixed(2)}
+      </TableCell>
 
-                              <TableCell>
-                                <div className="flex flex-wrap gap-1">
-                                  {item.dietary_tags?.length
-                                    ? item.dietary_tags.map(
-                                        (tag) => (
-                                          <Badge
-                                            key={tag}
-                                            variant="secondary"
-                                          >
-                                            {tag}
-                                          </Badge>
-                                        )
-                                      )
-                                    : "—"}
-                                </div>
-                              </TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {item.dietary_tags?.length
+            ? item.dietary_tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                >
+                  {tag}
+                </Badge>
+              ))
+            : "—"}
+        </div>
+      </TableCell>
 
-                              <TableCell>
-                                {item.sort_order}
-                              </TableCell>
+      <TableCell>
+        {item.sort_order}
+      </TableCell>
 
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    item.is_available
-                                      ? "default"
-                                      : "secondary"
-                                  }
-                                >
-                                  {item.is_available
-                                    ? "Available"
-                                    : "Hidden"}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
+      <TableCell>
+        <Badge
+          variant={
+            item.is_available
+              ? "default"
+              : "secondary"
+          }
+        >
+          {item.is_available
+            ? "Available"
+            : "Hidden"}
+        </Badge>
+      </TableCell>
+
+      <TableCell className="text-right">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => startEditing(item)}
+        >
+          <Pencil className="h-4 w-4" />
+          Edit
+        </Button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
                       </Table>
                     </div>
 
@@ -712,6 +810,17 @@ async function handleAddItem(
                               <p className="text-sm text-muted-foreground">
                                 {item.category}
                               </p>
+                              <div className="mt-4">
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    onClick={() => startEditing(item)}
+  >
+    <Pencil className="h-4 w-4" />
+    Edit
+  </Button>
+</div>
                             </div>
 
                             <Badge
