@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Pencil, Plus, X} from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Plus, Trash2, X} from "lucide-react";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/supabase-types";
 import { BrandMark } from "@/components/manul/BrandMark";
@@ -203,6 +203,37 @@ async function toggleAvailability(item: MenuItem) {
     )
   );
 }  
+
+  async function deleteMenuItem(item: MenuItem) {
+  const confirmed = window.confirm(
+    `Delete "${item.name}" permanently?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const { error: supabaseError } =
+    await getSupabaseClient()
+      .from("menu_items")
+      .delete()
+      .eq("id", item.id);
+
+  if (supabaseError) {
+    console.error(
+      "Failed to delete menu item:",
+      supabaseError
+    );
+
+    return;
+  }
+
+  setMenuItems((current) =>
+    current.filter(
+      (menuItem) => menuItem.id !== item.id
+    )
+  );
+}
   
 function toggleTag(tag: string) {
   setForm((current) => ({
@@ -678,6 +709,16 @@ async function handleSaveItem(
             ? "Save changes"
             : "Add item"}
           </Button>
+          
+        <Button
+        type="button"
+        variant="destructive"
+        size="sm"
+        onClick={() => deleteMenuItem(item)}
+        >
+  <Trash2 className="h-4 w-4" />
+  Delete
+</Button>
         </div>
       </form>
     </CardContent>
@@ -869,6 +910,15 @@ async function handleSaveItem(
   >
     {item.is_available ? "Hide" : "Show"}
   </Button>
+  <Button
+  type="button"
+  variant="destructive"
+  size="sm"
+  onClick={() => deleteMenuItem(item)}
+>
+  <Trash2 className="h-4 w-4" />
+  Delete
+</Button>
 </div>
                             </div>
 
