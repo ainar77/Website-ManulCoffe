@@ -173,7 +173,37 @@ function startEditing(item: MenuItem) {
     top: 0,
     behavior: "smooth",
   });
+async function toggleAvailability(item: MenuItem) {
+  const newAvailability = !item.is_available;
+
+  const { data, error: supabaseError } =
+    await getSupabaseClient()
+      .from("menu_items")
+      .update({
+        is_available: newAvailability,
+      })
+      .eq("id", item.id)
+      .select()
+      .single();
+
+  if (supabaseError || !data) {
+    console.error(
+      "Failed to update menu item availability:",
+      supabaseError
+    );
+
+    return;
+  }
+
+  setMenuItems((current) =>
+    current.map((menuItem) =>
+      menuItem.id === item.id ? data : menuItem
+    )
+  );
 }
+}
+
+  
   
 function toggleTag(tag: string) {
   setForm((current) => ({
@@ -777,17 +807,28 @@ async function handleSaveItem(
         </Badge>
       </TableCell>
 
-      <TableCell className="text-right">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => startEditing(item)}
-        >
-          <Pencil className="h-4 w-4" />
-          Edit
-        </Button>
-      </TableCell>
+      <TableCell>
+  <div className="flex justify-end gap-2">
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={() => startEditing(item)}
+    >
+      <Pencil className="h-4 w-4" />
+      Edit
+    </Button>
+
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={() => toggleAvailability(item)}
+    >
+      {item.is_available ? "Hide" : "Show"}
+    </Button>
+  </div>
+</TableCell>
     </TableRow>
   ))}
 </TableBody>
@@ -810,7 +851,7 @@ async function handleSaveItem(
                               <p className="text-sm text-muted-foreground">
                                 {item.category}
                               </p>
-                              <div className="mt-4">
+                             <div className="mt-4 flex flex-wrap gap-2">
   <Button
     type="button"
     variant="outline"
@@ -819,6 +860,15 @@ async function handleSaveItem(
   >
     <Pencil className="h-4 w-4" />
     Edit
+  </Button>
+
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    onClick={() => toggleAvailability(item)}
+  >
+    {item.is_available ? "Hide" : "Show"}
   </Button>
 </div>
                             </div>
