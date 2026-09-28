@@ -710,15 +710,7 @@ async function handleSaveItem(
             : "Add item"}
           </Button>
           
-        <Button
-        type="button"
-        variant="destructive"
-        size="sm"
-        onClick={() => deleteMenuItem(item)}
-        >
-  <Trash2 className="h-4 w-4" />
-  Delete
-</Button>
+      
         </div>
       </form>
     </CardContent>
@@ -847,7 +839,7 @@ async function handleSaveItem(
         </Badge>
       </TableCell>
 
-      <TableCell>
+     <TableCell>
   <div className="flex justify-end gap-2">
     <Button
       type="button"
@@ -866,6 +858,16 @@ async function handleSaveItem(
       onClick={() => toggleAvailability(item)}
     >
       {item.is_available ? "Hide" : "Show"}
+    </Button>
+
+    <Button
+      type="button"
+      variant="destructive"
+      size="sm"
+      onClick={() => deleteMenuItem(item)}
+    >
+      <Trash2 className="h-4 w-4" />
+      Delete
     </Button>
   </div>
 </TableCell>
