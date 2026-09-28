@@ -173,6 +173,8 @@ function startEditing(item: MenuItem) {
     top: 0,
     behavior: "smooth",
   });
+}
+
 async function toggleAvailability(item: MenuItem) {
   const newAvailability = !item.is_available;
 
@@ -200,10 +202,7 @@ async function toggleAvailability(item: MenuItem) {
       menuItem.id === item.id ? data : menuItem
     )
   );
-}
-}
-
-  
+}  
   
 function toggleTag(tag: string) {
   setForm((current) => ({
