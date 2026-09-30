@@ -1,7 +1,7 @@
 # ManulCoffee — Restaurant Website Platform
 
 ManulCoffee started as a modern website for a fictional coffee shop in Riga.  
-The project is now being developed into a reusable restaurant website platform that can be adapted for different cafés and restaurants.
+The project is now being developed into a reusable restaurant website platform that can be adapted for different cafes and restaurants.
 
 The main goal is to build a reusable backend and admin system while keeping the frontend flexible, so each business can have its own design, content and branding.
 
@@ -158,18 +158,6 @@ The project is being developed step by step, from a simple frontend website to a
 - [ ] Create a database backup strategy
 - [ ] Document recovery steps
 - [ ] Prepare the project for production maintenance
-
-### 17. Final QA & Reusability Test
-
-- [ ] Test the complete customer reservation flow
-- [ ] Test the complete admin workflow
-- [ ] Test desktop and mobile layouts
-- [ ] Test production security
-- [ ] Test email delivery
-- [ ] Test SEO and metadata
-- [ ] Clone the platform for another fictional restaurant
-- [ ] Replace branding, menu and business information
-- [ ] Verify that the core platform can be reused without rebuilding the backend
 
 ## Project Goal
 
