@@ -49,24 +49,7 @@ export const favorites = [
   { name: "Almond Croissant", description: "Twice-baked each morning with rich frangipane.", price: "€4.50", tag: "Favorite" },
 ];
 
-export const locations = [
-  {
-    name: "ManulCoffee Old Town",
-    address: "Miesnieku iela 8, Riga, LV-1050",
-    hours: { weekday: "08:00–20:00", weekend: "09:00–21:00" },
-    description: "A quiet corner in the old city, framed by cobblestones and morning light.",
-    mapUrl: "https://www.google.com/maps?q=Miesnieku%20iela%208%20Riga&output=embed",
-    directionsUrl: "https://www.google.com/maps/search/?api=1&query=Miesnieku+iela+8+Riga",
-  },
-  {
-    name: "ManulCoffee Centre",
-    address: "Baznīcas iela 24, Riga, LV-1010",
-    hours: { weekday: "07:30–20:00", weekend: "09:00–20:00" },
-    description: "Our bright city room for working lunches, long conversations and a second cup.",
-    mapUrl: "https://www.google.com/maps?q=Baznicas%20iela%2024%20Riga&output=embed",
-    directionsUrl: "https://www.google.com/maps/search/?api=1&query=Baznicas+iela+24+Riga",
-  },
-];
+
 
 export const reviews = [
   { name: "Elza K.", rating: 5, text: "Beautiful room, genuinely thoughtful coffee and the kindest team. The flat white is exceptional." },
