@@ -392,7 +392,7 @@ async function handleSaveItem(
             variant="dark"
             size="sm"
             onClick={() =>
-              navigate({ to: "/admin" })
+              navigate({ to: "/admin/" })
             }
           >
             <ArrowLeft className="h-4 w-4" />
