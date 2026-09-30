@@ -5,6 +5,10 @@ The project is now being developed into a reusable restaurant website platform t
 
 The main goal is to build a reusable backend and admin system while keeping the frontend flexible, so each business can have its own design, content and branding.
 
+## 🌍 Live Demo
+
+Link: **[View the ManulCoffee](https://website-manulcoffe.pages.dev)**
+
 ## Tech Stack
 
 - React
