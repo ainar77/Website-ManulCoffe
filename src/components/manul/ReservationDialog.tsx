@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSupabaseClient } from "@/integrations/supabase/client";
-import { locations } from "@/data/manulcoffee";
 
 interface FormState {
   customerName: string;
@@ -75,13 +74,66 @@ export function ReservationDialog({ trigger }: { trigger: ReactNode }) {
   const [unavailableTimes, setUnavailableTimes] = useState<string[]>([]);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  
+  const [locationOptions, setLocationOptions] = useState<string[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationsError, setLocationsError] = useState<string | null>(null);
 
   const update = (field: keyof FormState, value: string) => {
+    useEffect(() => {
+  if (!open) return;
+
+  let cancelled = false;
+
+  async function loadLocations() {
+    setLocationsLoading(true);
+    setLocationsError(null);
+
+    const { data, error } = await getSupabaseClient()
+      .from("business_locations")
+      .select("name")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (cancelled) return;
+
+    if (error || !data) {
+      console.error("Failed to load reservation locations:", error);
+
+      setLocationOptions([]);
+      setLocationsError(
+        "We couldn't load the locations. Please try again."
+      );
+      setLocationsLoading(false);
+      return;
+    }
+
+    const names = data.map((location) => location.name);
+
+    setLocationOptions(names);
+
+    setForm((current) => ({
+      ...current,
+      location: names.includes(current.location)
+        ? current.location
+        : "",
+    }));
+
+    setLocationsLoading(false);
+  }
+
+  void loadLocations();
+
+  return () => {
+    cancelled = true;
+  };
+}, [open]);
     setForm((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setSubmitError(null);
   };
 
+  
   const loadAvailability = useCallback(async (location: string, date: string) => {
   if (!location || !date) {
     setUnavailableTimes([]);
@@ -313,20 +365,51 @@ useEffect(() => {
                   {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="reservation-location">Location</Label>
-                <Select value={form.location} onValueChange={(value) => update("location", value)}>
-                  <SelectTrigger id="reservation-location" aria-invalid={Boolean(errors.location)}>
-                    <SelectValue placeholder="Choose a café" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.name} value={location.name}>{location.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.location && <p className="text-sm text-destructive">{errors.location}</p>}
-              </div>
+             <div className="grid gap-2">
+  <Label htmlFor="reservation-location">Location</Label>
+
+  <Select
+    value={form.location}
+    onValueChange={(value) => update("location", value)}
+    disabled={locationsLoading || Boolean(locationsError)}
+  >
+    <SelectTrigger
+      id="reservation-location"
+      aria-invalid={Boolean(errors.location)}
+    >
+      <SelectValue
+        placeholder={
+          locationsLoading
+            ? "Loading locations..."
+            : "Choose a café"
+        }
+      />
+    </SelectTrigger>
+
+    <SelectContent>
+      {locationOptions.map((locationName) => (
+        <SelectItem
+          key={locationName}
+          value={locationName}
+        >
+          {locationName}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+
+  {locationsError && (
+    <p className="text-sm text-destructive">
+      {locationsError}
+    </p>
+  )}
+
+  {errors.location && (
+    <p className="text-sm text-destructive">
+      {errors.location}
+    </p>
+  )}
+</div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-date">Date</Label>
