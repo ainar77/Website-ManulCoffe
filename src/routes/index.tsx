@@ -181,10 +181,9 @@ function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
               {settings?.tagline?.trim() || "Coffee worth slowing down for."}
             </p>
 
-            <p className="mt-3 max-w-lg text-sm leading-relaxed text-primary-foreground/70">
-              Carefully sourced beans, thoughtful
-              food, and warm rooms made for the
-              rhythm of Riga.
+           <p className="mt-3 max-w-lg text-sm leading-relaxed text-primary-foreground/70">
+              {settings?.description?.trim() ||
+              "Carefully sourced beans, thoughtful food, and warm rooms made for the rhythm of Riga."}
             </p>
           </div>
 
