@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Instagram,
-  Facebook,
-  Music2,
-  Send,
   Mail,
   Phone,
   MapPin,
@@ -26,6 +23,8 @@ import { SectionHeading } from "@/components/manul/SectionHeading";
 import { favorites } from "@/data/manulcoffee";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/supabase-types";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import type { PublicBusinessSettings } from "@/hooks/useBusinessSettings";
 
 type BusinessLocation =
   Database["public"]["Tables"]["business_locations"]["Row"];
@@ -150,7 +149,7 @@ function formatWeekdayHours(hours: BusinessHour[]) {
   )}–${formatTime(first.close_time)}`;
 }
 
-function Hero() {
+function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
   return (
     <section
       id="top"
@@ -173,13 +172,13 @@ function Hero() {
         </p>
 
         <h1 className="max-w-5xl font-display text-6xl font-semibold leading-[0.88] sm:text-8xl lg:text-[8rem]">
-          ManulCoffee
+          {settings?.business_name?.trim() || "ManulCoffee"}
         </h1>
 
         <div className="mt-7 grid gap-8 border-t border-primary-foreground/30 pt-7 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <p className="font-display text-2xl sm:text-3xl">
-              Coffee worth slowing down for.
+              {settings?.tagline?.trim() || "Coffee worth slowing down for."}
             </p>
 
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-primary-foreground/70">
@@ -288,7 +287,7 @@ function Favorites() {
   );
 }
 
-function Story() {
+function Story({ settings }: { settings: PublicBusinessSettings | null }) {
   return (
     <section className="bg-background py-section">
       <div className="mx-auto grid max-w-site gap-10 px-5 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-20">
@@ -302,12 +301,8 @@ function Story() {
           </h2>
 
           <p className="mt-7 max-w-lg text-base leading-8 text-muted-foreground">
-            ManulCoffee is a specialty coffee space
-            built around quality, community, and
-            considered details. Inspired by slow
-            mornings and good conversations, we make
-            each cup with care and keep our doors
-            open to the rhythm of the city.
+            {settings?.description?.trim() ||
+              "ManulCoffee is a specialty coffee space built around quality, community, and considered details. Inspired by slow mornings and good conversations, we make each cup with care and keep our doors open to the rhythm of the city."}
           </p>
 
           <p className="mt-6 text-sm font-semibold">
@@ -330,33 +325,12 @@ function Story() {
   );
 }
 
-const socials = [
-  {
-    label: "Instagram",
-    href: "https://instagram.com/",
-    icon: Instagram,
-  },
-  {
-    label: "Facebook",
-    href: "https://facebook.com/",
-    icon: Facebook,
-  },
-  {
-    label: "TikTok",
-    href: "https://tiktok.com/",
-    icon: Music2,
-  },
-  {
-    label: "Telegram",
-    href: "https://t.me/",
-    icon: Send,
-  },
-];
-
 function Contacts({
   locations,
+  settings,
 }: {
   locations: LocationWithHours[];
+  settings: PublicBusinessSettings | null;
 }) {
   const mainLocation = locations[0];
 
@@ -371,6 +345,11 @@ function Contacts({
           mainAddress
         )}`
       : "#");
+
+  const phone = settings?.phone?.trim() || mainLocation?.phone?.trim() || "";
+  const email = settings?.contact_email?.trim() || "";
+  const instagram = settings?.instagram_url?.trim() || "";
+  const website = settings?.website_url?.trim() || "";
 
   return (
     <section
@@ -402,48 +381,44 @@ function Contacts({
               </a>
             )}
 
-            <a
-              href="tel:+37120001234"
-              className="contact-link"
-            >
-              <Phone />
-              +371 20 001 234
-            </a>
+            {phone && (
+              <a href={`tel:${phone.replace(/[^+\d]/g, "")}`} className="contact-link">
+                <Phone />
+                {phone}
+              </a>
+            )}
 
-            <a
-              href="mailto:hello@manulcoffee.lv"
-              className="contact-link"
-            >
-              <Mail />
-              hello@manulcoffee.lv
-            </a>
+            {email && (
+              <a href={`mailto:${email}`} className="contact-link">
+                <Mail />
+                {email}
+              </a>
+            )}
 
-            <div className="flex gap-2">
-              {socials.map(
-                ({
-                  label,
-                  href,
-                  icon: Icon,
-                }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="grid size-11 place-items-center rounded-full border border-accent-foreground/30 transition-colors hover:bg-accent-foreground hover:text-accent"
-                    aria-label={label}
-                  >
-                    <Icon className="size-4" />
-                  </a>
-                )
-              )}
-            </div>
+            {website && (
+              <a href={website} target="_blank" rel="noopener noreferrer" className="contact-link">
+                Website
+              </a>
+            )}
+
+            {instagram && (
+              <div className="flex gap-2">
+                <a
+                  href={instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="grid size-11 place-items-center rounded-full border border-accent-foreground/30 transition-colors hover:bg-accent-foreground hover:text-accent"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="size-4" />
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
         <p className="mt-12 text-xs text-accent-foreground/70">
-          All contact details and social profiles
-          shown are fictional demo content.
+          Fictional concept for portfolio presentation.
         </p>
       </div>
     </section>
@@ -452,8 +427,10 @@ function Contacts({
 
 function Footer({
   locations,
+  settings,
 }: {
   locations: LocationWithHours[];
+  settings: PublicBusinessSettings | null;
 }) {
   return (
     <footer className="bg-coffee py-12 text-primary-foreground">
@@ -463,8 +440,8 @@ function Footer({
             <BrandMark />
 
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-primary-foreground/60">
-              Specialty coffee and thoughtful food,
-              made for unhurried moments in Riga.
+              {settings?.tagline?.trim() ||
+                "Specialty coffee and thoughtful food, made for unhurried moments in Riga."}
             </p>
           </div>
 
@@ -492,10 +469,7 @@ function Footer({
             {locations.map((location) => (
               <div key={location.id}>
                 <p className="font-semibold text-primary-foreground">
-                  {location.name.replace(
-                    "ManulCoffee ",
-                    ""
-                  )}
+                  {location.name}
                 </p>
 
                 <p className="mt-1">
@@ -514,7 +488,7 @@ function Footer({
 
         <div className="mt-8 flex flex-col gap-3 text-xs text-primary-foreground/50 sm:flex-row sm:justify-between">
           <p>
-            © 2026 ManulCoffee. All rights reserved.
+            © {new Date().getFullYear()} {settings?.business_name?.trim() || "ManulCoffee"}. All rights reserved.
           </p>
 
           <p>
@@ -528,6 +502,14 @@ function Footer({
 }
 
 function ManulCoffeePage() {
+  const { settings } = useBusinessSettings();
+
+  useEffect(() => {
+    if (settings?.business_name?.trim()) {
+      document.title = `${settings.business_name.trim()} — Specialty Coffee in Riga`;
+    }
+  }, [settings?.business_name]);
+
   const [locations, setLocations] = useState<
     LocationWithHours[]
   >([]);
@@ -575,17 +557,17 @@ function ManulCoffeePage() {
       <Header />
 
       <main>
-        <Hero />
+        <Hero settings={settings} />
         <Favorites />
         <MenuSection />
         <LocationsSection />
         <ReviewsSection />
-        <Story />
+        <Story settings={settings} />
 
-        <Contacts locations={locations} />
+        <Contacts locations={locations} settings={settings} />
       </main>
 
-      <Footer locations={locations} />
+      <Footer locations={locations} settings={settings} />
     </>
   );
 }
