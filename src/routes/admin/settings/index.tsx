@@ -320,6 +320,7 @@ function AdminSettingsPage() {
             </CardContent>
           </Card>
         ) : settings ? (
+          <>
           <form onSubmit={handleSave} className="space-y-6">
             <Card>
               <CardHeader>
@@ -382,8 +383,387 @@ function AdminSettingsPage() {
               </Button>
             </div>
           </form>
+          <LocationsManager />
+          </>
         ) : null}
       </main>
     </div>
+  );
+}
+
+
+type BusinessLocation = Database["public"]["Tables"]["business_locations"]["Row"];
+type BusinessLocationInsert = Database["public"]["Tables"]["business_locations"]["Insert"];
+type BusinessLocationUpdate = Database["public"]["Tables"]["business_locations"]["Update"];
+
+type LocationForm = {
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  phone: string;
+  description: string;
+  maps_url: string;
+  map_embed_url: string;
+  sort_order: string;
+  is_active: boolean;
+};
+
+const emptyLocationForm: LocationForm = {
+  name: "",
+  address: "",
+  city: "Riga",
+  postal_code: "",
+  phone: "",
+  description: "",
+  maps_url: "",
+  map_embed_url: "",
+  sort_order: "0",
+  is_active: true,
+};
+
+function locationToForm(location: BusinessLocation): LocationForm {
+  return {
+    name: location.name ?? "",
+    address: location.address ?? "",
+    city: location.city ?? "",
+    postal_code: location.postal_code ?? "",
+    phone: location.phone ?? "",
+    description: location.description ?? "",
+    maps_url: location.maps_url ?? "",
+    map_embed_url: location.map_embed_url ?? "",
+    sort_order: String(location.sort_order ?? 0),
+    is_active: location.is_active,
+  };
+}
+
+function sortLocations(rows: BusinessLocation[]): BusinessLocation[] {
+  return [...rows].sort((a, b) =>
+    a.sort_order - b.sort_order || a.name.localeCompare(b.name)
+  );
+}
+
+function LocationsManager() {
+  const [locations, setLocations] = useState<BusinessLocation[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+  const [locationsError, setLocationsError] = useState<string | null>(null);
+  const [locationMessage, setLocationMessage] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<BusinessLocation["id"] | null>(null);
+  const [showLocationForm, setShowLocationForm] = useState(false);
+  const [locationForm, setLocationForm] = useState<LocationForm>(emptyLocationForm);
+  const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<BusinessLocation["id"] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadLocations() {
+      try {
+        const { data, error } = await getSupabaseClient()
+          .from("business_locations")
+          .select("*")
+          .order("sort_order", { ascending: true });
+        if (cancelled) return;
+        if (error) {
+          console.error("Failed to load locations:", error);
+          setLocationsError("Couldn't load locations. Check admin access and try again.");
+        } else {
+          setLocations(sortLocations(data ?? []));
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Unexpected locations load error:", error);
+        setLocationsError("Couldn't connect to the database. Please try again.");
+      } finally {
+        if (!cancelled) setLoadingLocations(false);
+      }
+    }
+    void loadLocations();
+    return () => { cancelled = true; };
+  }, []);
+
+  function startAdding() {
+    if (busy) return;
+    setEditingId(null);
+    setLocationForm({ ...emptyLocationForm, sort_order: String(locations.length) });
+    setLocationsError(null);
+    setLocationMessage(null);
+    setShowLocationForm(true);
+  }
+
+  function startEditing(location: BusinessLocation) {
+    if (busy) return;
+    setEditingId(location.id);
+    setLocationForm(locationToForm(location));
+    setLocationsError(null);
+    setLocationMessage(null);
+    setShowLocationForm(true);
+  }
+
+  function cancelLocationEdit() {
+    if (busy) return;
+    setEditingId(null);
+    setShowLocationForm(false);
+    setLocationsError(null);
+  }
+
+  function changeLocation<K extends keyof LocationForm>(key: K, value: LocationForm[K]) {
+    setLocationForm((current) => ({ ...current, [key]: value }));
+    setLocationsError(null);
+    setLocationMessage(null);
+  }
+
+  async function saveLocation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    const name = locationForm.name.trim();
+    const address = locationForm.address.trim();
+    const city = locationForm.city.trim();
+    const sortOrder = Number(locationForm.sort_order);
+    if (!name || !address || !city) {
+      setLocationsError("Location name, address and city are required.");
+      return;
+    }
+    if (!/^\d+$/.test(locationForm.sort_order.trim()) || !Number.isSafeInteger(sortOrder)) {
+      setLocationsError("Display order must be a non-negative whole number.");
+      return;
+    }
+    if (!validHttpUrl(locationForm.maps_url) || !validHttpUrl(locationForm.map_embed_url)) {
+      setLocationsError("Map URLs must begin with https:// or http://.");
+      return;
+    }
+    if (!locationForm.is_active && editingId !== null &&
+        locations.filter((location) => location.is_active && location.id !== editingId).length === 0) {
+      setLocationsError("Keep at least one active location available for reservations.");
+      return;
+    }
+
+    // Reuse the parent business ID if this database schema links locations
+    // to the singleton business_settings row. Schemas without this column
+    // receive no extra property.
+    const existingBusiness = locations[0];
+    const parentBusinessId = existingBusiness && "business_id" in existingBusiness
+      ? existingBusiness.business_id
+      : undefined;
+
+    const payload = {
+      name,
+      address,
+      city,
+      postal_code: optionalText(locationForm.postal_code),
+      phone: optionalText(locationForm.phone),
+      description: optionalText(locationForm.description),
+      maps_url: optionalText(locationForm.maps_url),
+      map_embed_url: optionalText(locationForm.map_embed_url),
+      sort_order: sortOrder,
+      is_active: locationForm.is_active,
+      ...(parentBusinessId !== undefined ? { business_id: parentBusinessId } : {}),
+    } as BusinessLocationInsert;
+
+    setBusy(true);
+    setLocationsError(null);
+    setLocationMessage(null);
+    try {
+      if (editingId === null) {
+        const { data, error } = await getSupabaseClient()
+          .from("business_locations")
+          .insert(payload)
+          .select("*")
+          .single();
+        if (error || !data) throw error ?? new Error("No inserted location returned");
+        setLocations((current) => sortLocations([...current, data]));
+        setLocationMessage("Location added successfully.");
+      } else {
+        const changes: BusinessLocationUpdate = payload;
+        const { data, error } = await getSupabaseClient()
+          .from("business_locations")
+          .update(changes)
+          .eq("id", editingId)
+          .select("*")
+          .single();
+        if (error || !data) throw error ?? new Error("No updated location returned");
+        setLocations((current) => sortLocations(current.map((item) =>
+          item.id === editingId ? data : item
+        )));
+        setLocationMessage("Location updated successfully.");
+      }
+      setEditingId(null);
+      setShowLocationForm(false);
+    } catch (error) {
+      console.error("Failed to save location:", error);
+      setLocationsError("Couldn't save this location. Check the fields and your admin permissions.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleLocation(location: BusinessLocation) {
+    if (busy) return;
+    if (location.is_active && locations.filter((item) => item.is_active).length <= 1) {
+      setLocationsError("You cannot hide the last active location.");
+      return;
+    }
+    setBusy(true);
+    setBusyId(location.id);
+    setLocationsError(null);
+    setLocationMessage(null);
+    try {
+      const { data, error } = await getSupabaseClient()
+        .from("business_locations")
+        .update({ is_active: !location.is_active })
+        .eq("id", location.id)
+        .select("*")
+        .single();
+      if (error || !data) throw error ?? new Error("No updated location returned");
+      setLocations((current) => sortLocations(current.map((item) =>
+        item.id === location.id ? data : item
+      )));
+      setLocationMessage(data.is_active ? "Location is now visible." : "Location hidden from the public site and booking form.");
+    } catch (error) {
+      console.error("Failed to change location visibility:", error);
+      setLocationsError("Couldn't change visibility. Please try again.");
+    } finally {
+      setBusy(false);
+      setBusyId(null);
+    }
+  }
+
+  async function deleteLocation(location: BusinessLocation) {
+    if (busy) return;
+    if (location.is_active && locations.filter((item) => item.is_active).length <= 1) {
+      setLocationsError("You cannot delete the last active location.");
+      return;
+    }
+    if (!window.confirm(
+      `Permanently delete "${location.name}"? This cannot be undone. ` +
+      "If it has linked opening hours, the database may reject deletion. " +
+      "Hiding a location is safer when you want to preserve its data."
+    )) return;
+    setBusy(true);
+    setBusyId(location.id);
+    setLocationsError(null);
+    setLocationMessage(null);
+    try {
+      const { data, error } = await getSupabaseClient()
+        .from("business_locations")
+        .delete()
+        .eq("id", location.id)
+        .select("id");
+      if (error) {
+        if (error.code === "23503") {
+          setLocationsError("This location has linked records (such as opening hours). Hide it instead; don't delete linked data.");
+          return;
+        }
+        throw error;
+      }
+      if (!data || data.length !== 1) {
+        setLocationsError("Deletion was not confirmed. Check admin permissions and refresh.");
+        return;
+      }
+      setLocations((current) => current.filter((item) => item.id !== location.id));
+      if (editingId === location.id) {
+        setShowLocationForm(false);
+        setEditingId(null);
+      }
+      setLocationMessage("Location deleted.");
+    } catch (error) {
+      console.error("Failed to delete location:", error);
+      setLocationsError("Couldn't delete this location. Try hiding it instead.");
+    } finally {
+      setBusy(false);
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <section className="mt-10 space-y-5" aria-labelledby="locations-manager-title">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 id="locations-manager-title" className="font-display text-2xl font-semibold text-primary-foreground">
+            Locations
+          </h2>
+          <p className="mt-1 text-sm text-primary-foreground/70">
+            Add, edit, hide and manage restaurant branches. Opening hours are managed in phase 9H.
+          </p>
+        </div>
+        <Button type="button" onClick={startAdding} disabled={loadingLocations || busy}>
+          Add location
+        </Button>
+      </div>
+
+      {locationsError && <p role="alert" className="rounded-sm bg-destructive/10 p-3 text-sm text-primary-foreground">{locationsError}</p>}
+      {locationMessage && <p role="status" className="flex items-center gap-2 rounded-sm bg-primary-foreground/10 p-3 text-sm text-primary-foreground"><CheckCircle2 className="h-4 w-4" />{locationMessage}</p>}
+
+      {showLocationForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{editingId === null ? "Add location" : "Edit location"}</CardTitle>
+            <CardDescription>Changes are saved to Supabase. Fields marked * are required.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={saveLocation} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field id="location-name" label="Location name" value={locationForm.name} onChange={(value) => changeLocation("name", value)} required />
+                <Field id="location-address" label="Street address" value={locationForm.address} onChange={(value) => changeLocation("address", value)} required />
+                <Field id="location-city" label="City" value={locationForm.city} onChange={(value) => changeLocation("city", value)} required />
+                <Field id="location-postal-code" label="Postal code" value={locationForm.postal_code} onChange={(value) => changeLocation("postal_code", value)} />
+                <Field id="location-phone" label="Phone" value={locationForm.phone} onChange={(value) => changeLocation("phone", value)} type="tel" />
+                <Field id="location-sort-order" label="Display order (0, 1, 2...)" value={locationForm.sort_order} onChange={(value) => changeLocation("sort_order", value)} required />
+                <Field id="location-maps-url" label="Google Maps directions URL" value={locationForm.maps_url} onChange={(value) => changeLocation("maps_url", value)} type="url" placeholder="https://maps.google.com/..." />
+                <Field id="location-map-embed-url" label="Map embed URL" value={locationForm.map_embed_url} onChange={(value) => changeLocation("map_embed_url", value)} type="url" placeholder="https://www.google.com/maps/embed?..." />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="location-description" className="block text-sm font-medium text-foreground">Description</label>
+                <textarea id="location-description" rows={3} value={locationForm.description}
+                  onChange={(event) => changeLocation("description", event.target.value)}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-foreground">
+                <input type="checkbox" checked={locationForm.is_active} onChange={(event) => changeLocation("is_active", event.target.checked)} />
+                Visible on the website and in the booking form
+              </label>
+              <div className="flex flex-wrap justify-end gap-3">
+                <Button type="button" variant="outline" disabled={busy} onClick={cancelLocationEdit}>Cancel</Button>
+                <Button type="submit" disabled={busy}>{busy ? "Saving…" : editingId === null ? "Add location" : "Save location"}</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {loadingLocations ? (
+        <div className="flex items-center gap-2 text-primary-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading locations…</div>
+      ) : (
+        <div className="grid gap-4">
+          {locations.length === 0 && <Card><CardContent className="py-6 text-sm">No locations yet.</CardContent></Card>}
+          {locations.map((location) => (
+            <Card key={String(location.id)}>
+              <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display text-lg font-semibold">{location.name}</h3>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${location.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-700"}`}>
+                      {location.is_active ? "Visible" : "Hidden"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{[location.address, location.city, location.postal_code].filter(Boolean).join(", ")}</p>
+                  {location.phone && <p className="text-sm text-muted-foreground">{location.phone}</p>}
+                  <p className="text-xs text-muted-foreground">Display order: {location.sort_order}</p>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => startEditing(location)}>Edit</Button>
+                  <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => toggleLocation(location)}>
+                    {busyId === location.id ? "Working…" : location.is_active ? "Hide" : "Show"}
+                  </Button>
+                  <Button type="button" size="sm" variant="destructive" disabled={busy} onClick={() => deleteLocation(location)}>Delete</Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      <p className="text-xs text-primary-foreground/60">
+        Hiding a branch removes it from public location and reservation choices, but keeps its data and historical reservations. Newly added branches need opening hours configured in phase 9H.
+      </p>
+    </section>
   );
 }
