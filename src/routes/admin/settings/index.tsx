@@ -453,6 +453,7 @@ function LocationsManager() {
   const [locationForm, setLocationForm] = useState<LocationForm>(emptyLocationForm);
   const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState<BusinessLocation["id"] | null>(null);
+  const [hoursLocationId, setHoursLocationId] = useState<BusinessLocation["id"] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -492,6 +493,7 @@ function LocationsManager() {
 
   function startEditing(location: BusinessLocation) {
     if (busy) return;
+    setHoursLocationId(null);
     setEditingId(location.id);
     setLocationForm(locationToForm(location));
     setLocationsError(null);
@@ -660,6 +662,7 @@ function LocationsManager() {
         return;
       }
       setLocations((current) => current.filter((item) => item.id !== location.id));
+      if (hoursLocationId === location.id) setHoursLocationId(null);
       if (editingId === location.id) {
         setShowLocationForm(false);
         setEditingId(null);
@@ -682,7 +685,7 @@ function LocationsManager() {
             Locations
           </h2>
           <p className="mt-1 text-sm text-primary-foreground/70">
-            Add, edit, hide and manage restaurant branches. Opening hours are managed in phase 9H.
+            Add, edit and hide branches, or configure weekly opening hours for each location.
           </p>
         </div>
         <Button type="button" onClick={startAdding} disabled={loadingLocations || busy}>
@@ -751,19 +754,251 @@ function LocationsManager() {
                 </div>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
                   <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => startEditing(location)}>Edit</Button>
+                  <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => { setShowLocationForm(false); setHoursLocationId((current) => current === location.id ? null : location.id); }}>
+                    {hoursLocationId === location.id ? "Close hours" : "Opening hours"}
+                  </Button>
                   <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => toggleLocation(location)}>
                     {busyId === location.id ? "Working…" : location.is_active ? "Hide" : "Show"}
                   </Button>
                   <Button type="button" size="sm" variant="destructive" disabled={busy} onClick={() => deleteLocation(location)}>Delete</Button>
                 </div>
               </CardContent>
+              {hoursLocationId === location.id && <CardContent className="border-t border-border/60 pt-0"><HoursManager key={String(location.id)} location={location} /></CardContent>}
             </Card>
           ))}
         </div>
       )}
       <p className="text-xs text-primary-foreground/60">
-        Hiding a branch removes it from public location and reservation choices, but keeps its data and historical reservations. Newly added branches need opening hours configured in phase 9H.
+        Hiding a branch removes it from public location and reservation choices, but keeps its data and historical reservations. Configure hours for new branches before making them visible to customers.
       </p>
     </section>
+  );
+}
+
+// Phase 9H: weekly opening hours for one location at a time.
+type BusinessHour = Database["public"]["Tables"]["business_hours"]["Row"];
+type BusinessHourInsert = Database["public"]["Tables"]["business_hours"]["Insert"];
+type BusinessHourUpdate = Database["public"]["Tables"]["business_hours"]["Update"];
+
+type DayHours = {
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  is_closed: boolean;
+};
+
+const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+function normalizeTime(time: string | null | undefined, fallback: string): string {
+  return time ? time.slice(0, 5) : fallback;
+}
+
+function defaultHours(day: number): DayHours {
+  return { day_of_week: day, open_time: "09:00", close_time: "18:00", is_closed: true };
+}
+
+function toDayHours(day: number, rows: BusinessHour[]): DayHours {
+  const row = rows.find((item) => item.day_of_week === day);
+  return row ? {
+    day_of_week: day,
+    open_time: normalizeTime(row.open_time, "09:00"),
+    close_time: normalizeTime(row.close_time, "18:00"),
+    is_closed: row.is_closed,
+  } : defaultHours(day);
+}
+
+function HoursManager({ location }: { location: BusinessLocation }) {
+  const [originalRows, setOriginalRows] = useState<BusinessHour[]>([]);
+  const [days, setDays] = useState<DayHours[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [savingHours, setSavingHours] = useState(false);
+  const [hoursError, setHoursError] = useState<string | null>(null);
+  const [hoursMessage, setHoursMessage] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [needsReload, setNeedsReload] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadHours() {
+      setLoading(true);
+      setHoursError(null);
+      setHoursMessage(null);
+      try {
+        const { data, error } = await getSupabaseClient()
+          .from("business_hours")
+          .select("*")
+          .eq("location_id", location.id)
+          .order("day_of_week", { ascending: true });
+        if (cancelled) return;
+        if (error) throw error;
+        const rows = data ?? [];
+        const uniqueDays = new Set(rows.map((row) => row.day_of_week));
+        if (uniqueDays.size !== rows.length || rows.some((row) => row.day_of_week < 0 || row.day_of_week > 6)) {
+          throw new Error("Duplicate or invalid day records in business_hours");
+        }
+        setOriginalRows(rows);
+        setDays(WEEKDAYS.map((_, index) => toDayHours(index, rows)));
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to load business hours:", error);
+        setHoursError("Couldn't load opening hours. Check database permissions and try again.");
+        setDays([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void loadHours();
+    return () => { cancelled = true; };
+  }, [location.id, reloadKey]);
+
+  const dirtyDays = useMemo(() => days.filter((day) => {
+    const initial = toDayHours(day.day_of_week, originalRows);
+    return !originalRows.some((row) => row.day_of_week === day.day_of_week) ||
+      day.is_closed !== initial.is_closed ||
+      (!day.is_closed && (day.open_time !== initial.open_time || day.close_time !== initial.close_time));
+  }), [days, originalRows]);
+
+  function changeDay(dayNumber: number, changes: Partial<DayHours>) {
+    if (savingHours || needsReload) return;
+    setDays((current) => current.map((day) => day.day_of_week === dayNumber ? { ...day, ...changes } : day));
+    setHoursError(null);
+    setHoursMessage(null);
+  }
+
+  function cancelChanges() {
+    if (savingHours) return;
+    setDays(WEEKDAYS.map((_, index) => toDayHours(index, originalRows)));
+    setHoursError(null);
+    setHoursMessage(null);
+  }
+
+  async function saveHours(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (savingHours || needsReload || dirtyDays.length === 0) return;
+    for (const day of days) {
+      if (!day.is_closed && (!/^\d{2}:\d{2}$/.test(day.open_time) ||
+        !/^\d{2}:\d{2}$/.test(day.close_time) || day.open_time >= day.close_time)) {
+        setHoursError(`${WEEKDAYS[day.day_of_week]}: closing time must be later than opening time.`);
+        return;
+      }
+    }
+
+    setSavingHours(true);
+    setHoursError(null);
+    setHoursMessage(null);
+    let completed = 0;
+    try {
+      // Update/insert only changed weekdays. Never delete existing hours.
+      for (const day of dirtyDays) {
+        const existing = originalRows.find((row) => row.day_of_week === day.day_of_week);
+        const fields = {
+          open_time: day.open_time,
+          close_time: day.close_time,
+          is_closed: day.is_closed,
+        };
+        if (existing) {
+          const payload: BusinessHourUpdate = fields;
+          const { data, error } = await getSupabaseClient()
+            .from("business_hours")
+            .update(payload)
+            .eq("location_id", location.id)
+            .eq("day_of_week", day.day_of_week)
+            .select("day_of_week");
+          if (error || !data || data.length !== 1) {
+            throw error ?? new Error(`Update of ${WEEKDAYS[day.day_of_week]} was not confirmed`);
+          }
+        } else {
+          const payload: BusinessHourInsert = {
+            location_id: location.id,
+            day_of_week: day.day_of_week,
+            ...fields,
+          };
+          const { data, error } = await getSupabaseClient()
+            .from("business_hours")
+            .insert(payload)
+            .select("day_of_week");
+          if (error || !data || data.length !== 1) {
+            throw error ?? new Error(`Insert of ${WEEKDAYS[day.day_of_week]} was not confirmed`);
+          }
+        }
+        completed += 1;
+      }
+      // Re-read from Supabase so the UI reflects exactly what was stored.
+      const { data, error } = await getSupabaseClient()
+        .from("business_hours")
+        .select("*")
+        .eq("location_id", location.id)
+        .order("day_of_week", { ascending: true });
+      if (error) throw error;
+      const savedRows = data ?? [];
+      setOriginalRows(savedRows);
+      setDays(WEEKDAYS.map((_, index) => toDayHours(index, savedRows)));
+      setNeedsReload(false);
+      setHoursMessage("Opening hours saved successfully.");
+    } catch (error) {
+      console.error("Failed to save opening hours:", error);
+      setHoursError(completed > 0
+        ? `Only ${completed} of ${dirtyDays.length} changed days were saved. Reload hours before editing again.`
+        : "Couldn't save opening hours. Check admin permissions and try again.");
+      // A partial write can occur because this is not a database transaction.
+      // Lock edits until the user explicitly reloads current database state.
+      setNeedsReload(true);
+    } finally {
+      setSavingHours(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-md border border-border bg-background/80 p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h4 className="text-base font-semibold">Weekly opening hours</h4>
+          <p className="text-xs text-muted-foreground">{location.name} · Times are local to the restaurant.</p>
+        </div>
+        <Button type="button" size="sm" variant="outline" disabled={loading || savingHours} onClick={() => { setNeedsReload(false); setReloadKey((key) => key + 1); }}>
+          Reload hours
+        </Button>
+      </div>
+      {loading ? <p className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Loading hours…</p> : (
+        <form onSubmit={saveHours} className="space-y-4">
+          <div className="space-y-3">
+            {days.map((day) => (
+              <div key={day.day_of_week} className="grid gap-2 rounded-md border border-border/70 p-3 sm:grid-cols-[105px_100px_1fr_1fr] sm:items-center">
+                <span className="text-sm font-medium">{WEEKDAYS[day.day_of_week]}</span>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={day.is_closed} disabled={savingHours || needsReload}
+                    onChange={(event) => changeDay(day.day_of_week, { is_closed: event.target.checked })} />
+                  Closed
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  Opens
+                  <Input type="time" aria-label={`${WEEKDAYS[day.day_of_week]} opening time`} value={day.open_time}
+                    disabled={day.is_closed || savingHours || needsReload} required={!day.is_closed}
+                    onChange={(event) => changeDay(day.day_of_week, { open_time: event.target.value })} />
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  Closes
+                  <Input type="time" aria-label={`${WEEKDAYS[day.day_of_week]} closing time`} value={day.close_time}
+                    disabled={day.is_closed || savingHours || needsReload} required={!day.is_closed}
+                    onChange={(event) => changeDay(day.day_of_week, { close_time: event.target.value })} />
+                </label>
+              </div>
+            ))}
+          </div>
+          {hoursError && <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{hoursError}</p>}
+          {hoursMessage && <p role="status" className="flex items-center gap-2 text-sm text-green-700"><CheckCircle2 className="h-4 w-4" />{hoursMessage}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">{dirtyDays.length} unsaved day(s)</p>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" disabled={savingHours || needsReload || dirtyDays.length === 0} onClick={cancelChanges}>Cancel changes</Button>
+              <Button type="submit" disabled={savingHours || needsReload || dirtyDays.length === 0}>
+                {savingHours && <Loader2 className="h-4 w-4 animate-spin" />}
+                {savingHours ? "Saving…" : "Save opening hours"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
