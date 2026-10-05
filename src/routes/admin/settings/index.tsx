@@ -425,11 +425,13 @@ type BusinessLocationUpdate = Database["public"]["Tables"]["business_locations"]
 
 type LocationForm = {
   name: string;
+  name_lv: string;
   address: string;
   city: string;
   postal_code: string;
   phone: string;
   description: string;
+  description_lv: string;
   maps_url: string;
   map_embed_url: string;
   sort_order: string;
@@ -438,11 +440,13 @@ type LocationForm = {
 
 const emptyLocationForm: LocationForm = {
   name: "",
+  name_lv: "",
   address: "",
   city: "Riga",
   postal_code: "",
   phone: "",
   description: "",
+  description_lv: "",
   maps_url: "",
   map_embed_url: "",
   sort_order: "0",
@@ -452,11 +456,13 @@ const emptyLocationForm: LocationForm = {
 function locationToForm(location: BusinessLocation): LocationForm {
   return {
     name: location.name ?? "",
+    name_lv: location.name_lv ?? "",
     address: location.address ?? "",
     city: location.city ?? "",
     postal_code: location.postal_code ?? "",
     phone: location.phone ?? "",
     description: location.description ?? "",
+    description_lv: location.description_lv ?? "",
     maps_url: location.maps_url ?? "",
     map_embed_url: location.map_embed_url ?? "",
     sort_order: String(location.sort_order ?? 0),
@@ -576,11 +582,13 @@ function LocationsManager() {
 
     const payload = {
       name,
+      name_lv: optionalText(locationForm.name_lv),
       address,
       city,
       postal_code: optionalText(locationForm.postal_code),
       phone: optionalText(locationForm.phone),
       description: optionalText(locationForm.description),
+      description_lv: optionalText(locationForm.description_lv),
       maps_url: optionalText(locationForm.maps_url),
       map_embed_url: optionalText(locationForm.map_embed_url),
       sort_order: sortOrder,
@@ -732,7 +740,8 @@ function LocationsManager() {
           <CardContent>
             <form onSubmit={saveLocation} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field id="location-name" label="Location name" value={locationForm.name} onChange={(value) => changeLocation("name", value)} required />
+                <Field id="location-name" label="Location name — English" value={locationForm.name} onChange={(value) => changeLocation("name", value)} required />
+                <Field id="location-name-lv" label="Location name — Latviešu" value={locationForm.name_lv} onChange={(value) => changeLocation("name_lv", value)} />
                 <Field id="location-address" label="Street address" value={locationForm.address} onChange={(value) => changeLocation("address", value)} required />
                 <Field id="location-city" label="City" value={locationForm.city} onChange={(value) => changeLocation("city", value)} required />
                 <Field id="location-postal-code" label="Postal code" value={locationForm.postal_code} onChange={(value) => changeLocation("postal_code", value)} />
@@ -741,11 +750,19 @@ function LocationsManager() {
                 <Field id="location-maps-url" label="Google Maps directions URL" value={locationForm.maps_url} onChange={(value) => changeLocation("maps_url", value)} type="url" placeholder="https://maps.google.com/..." />
                 <Field id="location-map-embed-url" label="Map embed URL" value={locationForm.map_embed_url} onChange={(value) => changeLocation("map_embed_url", value)} type="url" placeholder="https://www.google.com/maps/embed?..." />
               </div>
-              <div className="space-y-1.5">
-                <label htmlFor="location-description" className="block text-sm font-medium text-foreground">Description</label>
-                <textarea id="location-description" rows={3} value={locationForm.description}
-                  onChange={(event) => changeLocation("description", event.target.value)}
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label htmlFor="location-description" className="block text-sm font-medium text-foreground">Description — English</label>
+                  <textarea id="location-description" rows={3} value={locationForm.description}
+                    onChange={(event) => changeLocation("description", event.target.value)}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="location-description-lv" className="block text-sm font-medium text-foreground">Description — Latviešu</label>
+                  <textarea id="location-description-lv" rows={3} value={locationForm.description_lv}
+                    onChange={(event) => changeLocation("description_lv", event.target.value)}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                </div>
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground">
                 <input type="checkbox" checked={locationForm.is_active} onChange={(event) => changeLocation("is_active", event.target.checked)} />
