@@ -93,7 +93,7 @@ export function ReservationDialog({
 }: {
   trigger: ReactNode;
 }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -112,7 +112,9 @@ export function ReservationDialog({
     null
   );
 
-  const [locationOptions, setLocationOptions] = useState<string[]>([]);
+  const [locationOptions, setLocationOptions] = useState<
+    { name: string; name_lv: string | null }[]
+  >([]);
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locationsError, setLocationsError] = useState<string | null>(null);
 
@@ -130,7 +132,7 @@ export function ReservationDialog({
       try {
         const { data, error } = await getSupabaseClient()
           .from("business_locations")
-          .select("name")
+          .select("name, name_lv")
           .eq("is_active", true)
           .order("sort_order", { ascending: true });
 
@@ -150,17 +152,18 @@ export function ReservationDialog({
           return;
         }
 
-        const names = (data ?? []).map(
+        const options = data ?? [];
+        const canonicalNames = options.map(
           (location) => location.name
         );
 
-        setLocationOptions(names);
+        setLocationOptions(options);
 
-        // If the previously selected location was disabled or deleted,
-        // remove it from the current form.
+        // Keep the canonical English name as the stored reservation value.
+        // Only the visible label is localized.
         setForm((current) => ({
           ...current,
-          location: names.includes(current.location)
+          location: canonicalNames.includes(current.location)
             ? current.location
             : "",
         }));
@@ -701,14 +704,21 @@ export function ReservationDialog({
 
                   <SelectContent>
                     {locationOptions.map(
-                      (locationName) => (
-                        <SelectItem
-                          key={locationName}
-                          value={locationName}
-                        >
-                          {locationName}
-                        </SelectItem>
-                      )
+                      (location) => {
+                        const displayName =
+                          language === "lv"
+                            ? location.name_lv?.trim() || location.name
+                            : location.name;
+
+                        return (
+                          <SelectItem
+                            key={location.name}
+                            value={location.name}
+                          >
+                            {displayName}
+                          </SelectItem>
+                        );
+                      }
                     )}
                   </SelectContent>
                 </Select>
