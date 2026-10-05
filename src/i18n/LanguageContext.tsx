@@ -3,9 +3,9 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from "react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 
 import {
   translations,
@@ -23,18 +23,8 @@ const STORAGE_KEY = "manulcoffee-language";
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-function getInitialLanguage(): Language {
-  if (typeof window === "undefined") {
-    return "en";
-  }
-
-  const saved = window.localStorage.getItem(STORAGE_KEY);
-
-  if (saved === "en" || saved === "lv") {
-    return saved;
-  }
-
-  return "en";
+function languageFromPathname(pathname: string): Language {
+  return pathname === "/lv" || pathname.startsWith("/lv/") ? "lv" : "en";
 }
 
 export function LanguageProvider({
@@ -42,20 +32,30 @@ export function LanguageProvider({
 }: {
   children: ReactNode;
 }) {
-  const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const pathname = useLocation({
+    select: (location) => location.pathname,
+  });
+  const navigate = useNavigate();
+
+  const language = languageFromPathname(pathname);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, language);
-    document.documentElement.lang = language;
   }, [language]);
 
   const value = useMemo(
     () => ({
       language,
-      setLanguage,
+      setLanguage: (nextLanguage: Language) => {
+        if (nextLanguage === language) return;
+
+        void navigate({
+          to: nextLanguage === "lv" ? "/lv" : "/",
+        });
+      },
       t: translations[language] as TranslationDictionary,
     }),
-    [language]
+    [language, navigate],
   );
 
   return (
