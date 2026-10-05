@@ -553,7 +553,11 @@ function ManulCoffeePage() {
 
   return (
     <>
-      <Header />
+      <Header
+  businessName={
+    settings?.business_name?.trim() || "ManulCoffee"
+  }
+/>
 
       <main>
         <Hero settings={settings} />
