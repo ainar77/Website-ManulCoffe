@@ -436,7 +436,11 @@ function Footer({
       <div className="mx-auto max-w-site px-5 sm:px-8">
         <div className="grid gap-10 border-b border-primary-foreground/15 pb-10 md:grid-cols-[1.2fr_0.8fr_1fr]">
           <div>
-            <BrandMark />
+            <BrandMark
+  name={
+    settings?.business_name?.trim() || "ManulCoffee"
+  }
+/>
 
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-primary-foreground/60">
               {settings?.tagline?.trim() ||
