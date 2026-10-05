@@ -153,12 +153,14 @@ export interface Database {
         Row: {
           id: number;
           name: string;
+          name_lv: string | null;
           address: string;
           city: string | null;
           postal_code: string | null;
           phone: string | null;
           maps_url: string | null;
           description: string | null;
+          description_lv: string | null;
           map_embed_url: string | null;
           sort_order: number;
           is_active: boolean;
@@ -168,12 +170,14 @@ export interface Database {
         Insert: {
           id?: number;
           name: string;
+          name_lv?: string | null;
           address: string;
           city?: string | null;
           postal_code?: string | null;
           phone?: string | null;
           maps_url?: string | null;
           description?: string | null;
+          description_lv?: string | null;
           map_embed_url?: string | null;
           sort_order?: number;
           is_active?: boolean;
@@ -183,12 +187,14 @@ export interface Database {
         Update: {
           id?: number;
           name?: string;
+          name_lv?: string | null;
           address?: string;
           city?: string | null;
           postal_code?: string | null;
           phone?: string | null;
           maps_url?: string | null;
           description?: string | null;
+          description_lv?: string | null;
           map_embed_url?: string | null;
           sort_order?: number;
           is_active?: boolean;
