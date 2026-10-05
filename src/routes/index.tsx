@@ -20,7 +20,7 @@ import { MenuSection } from "@/components/manul/MenuSection";
 import { ReviewsSection } from "@/components/manul/ReviewsSection";
 import { SectionHeading } from "@/components/manul/SectionHeading";
 
-import { favorites } from "@/data/manulcoffee";
+import { favorites, favoritesLv } from "@/data/manulcoffee";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/supabase-types";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
@@ -230,7 +230,8 @@ function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
 }
 
 function Favorites() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+  const localizedFavorites = language === "lv" ? favoritesLv : favorites;
 
   return (
     <section
@@ -244,7 +245,7 @@ function Favorites() {
         />
 
         <div className="grid gap-6 md:grid-cols-3">
-          {favorites.map(
+          {localizedFavorites.map(
             (item, index) => (
               <article
                 key={item.name}
