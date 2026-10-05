@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import menuCollection from "@/assets/menu-collection.jpg";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/integrations/supabase/client";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { SectionHeading } from "./SectionHeading";
 
 const menuCategories = [
@@ -33,6 +34,7 @@ const cropByCategory: Record<MenuCategory, string> = {
 };
 
 export function MenuSection() {
+  const { t } = useLanguage();
   const [active, setActive] = useState<MenuCategory>("Hot");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,7 @@ export function MenuSection() {
 
       if (supabaseError) {
         console.error("Failed to load menu:", supabaseError);
-        setError("We couldn't load the menu right now.");
+        setError(t.menu.loadError);
         setMenuItems([]);
       } else {
         setMenuItems((data ?? []) as MenuItem[]);
@@ -72,7 +74,7 @@ export function MenuSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t.menu.loadError]);
 
   const visible = menuItems.filter(
     (item) => item.category === active
@@ -86,8 +88,8 @@ export function MenuSection() {
       <div className="mx-auto max-w-site px-5 sm:px-8">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <SectionHeading
-            eyebrow="Made throughout the day"
-            title="Menu"
+            eyebrow={t.menu.eyebrow}
+            title={t.menu.title}
           />
 
           <p className="mb-10 max-w-md text-muted-foreground sm:mb-14">
@@ -99,7 +101,7 @@ export function MenuSection() {
         <div
           className="no-scrollbar mb-10 flex gap-2 overflow-x-auto pb-2"
           role="tablist"
-          aria-label="Menu categories"
+          aria-label={t.menu.categoriesLabel}
         >
           {menuCategories.map((category) => (
             <Button
