@@ -63,3 +63,65 @@ export const creators = [
   { name: "Nils Bergs", role: "Photographer", quote: "The light, the people, the first espresso. ManulCoffee gets mornings right." },
   { name: "Lina Vītola", role: "Food writer", quote: "Quietly ambitious coffee and pastries with real personality." },
 ];
+
+export const favoritesLv = [
+  {
+    name: "Mākoņu kapučīno",
+    description: "Mūsu īpašais espresso ar neticami zīdainu pienu.",
+    price: "€4.20",
+    tag: "Populārs",
+  },
+  {
+    name: "Citrusu Cold Brew",
+    description: "Lēni gatavota aukstā kafija ar apelsīnu un mājas toniku.",
+    price: "€4.80",
+    tag: "Sezonas",
+  },
+  {
+    name: "Mandeļu kruasāns",
+    description: "Katru rītu divreiz cepts kruasāns ar bagātīgu mandeļu frangipānu.",
+    price: "€4.50",
+    tag: "Iecienīts",
+  },
+];
+
+export const reviewsLv = [
+  {
+    name: "Elza K.",
+    rating: 5,
+    text: "Skaista vieta, patiesi pārdomāta kafija un ļoti laipna komanda. Flat white ir izcils.",
+  },
+  {
+    name: "Mārtiņš L.",
+    rating: 5,
+    text: "Mans nesteidzīgais sestdienas rituāls. Lieliskas kafijas pupiņas, mierīga mūzika un konditorejas izstrādājumi, kuru dēļ vienmēr ir vērts ierasties agrāk.",
+  },
+  {
+    name: "Sofia R.",
+    rating: 5,
+    text: "Silta un pārdomāta vieta, kas šķiet īpaša bez liekas piepūles. Ļoti patika espresso toniks.",
+  },
+  {
+    name: "Tomass V.",
+    rating: 4,
+    text: "Rūpīga apkalpošana un lieliski sabalansēta filtra kafija. Vieta, kur viegli palikt vēl uz vienu tasi.",
+  },
+];
+
+export const creatorsLv = [
+  {
+    name: "Mara Ozola",
+    role: "Keramiķe",
+    quote: "Mans iecienītākais galdiņš jaunu formu skicēšanai — ar kapučīno tepat blakus.",
+  },
+  {
+    name: "Nils Bergs",
+    role: "Fotogrāfs",
+    quote: "Gaisma, cilvēki, pirmais espresso. ManulCoffee prot radīt īsto rīta sajūtu.",
+  },
+  {
+    name: "Lina Vītola",
+    role: "Ēdienu autore",
+    quote: "Klusi ambicioza kafija un konditorejas izstrādājumi ar īstu raksturu.",
+  },
+];
