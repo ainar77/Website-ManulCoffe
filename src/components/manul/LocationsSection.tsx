@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import locationsImage from "@/assets/locations.jpg";
 import { Clock, MapPin, Navigation } from "lucide-react";
 import { getSupabaseClient } from "@/integrations/supabase/client";
+import { useLanguage } from "@/i18n/LanguageContext";
 import type { Database } from "@/lib/supabase-types";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "./SectionHeading";
@@ -112,6 +113,7 @@ function isLocationOpen(hours: BusinessHour[]) {
 }
 
 export function LocationsSection() {
+  const { t } = useLanguage();
   const [locations, setLocations] = useState<LocationWithHours[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,7 +140,7 @@ export function LocationsSection() {
           locationError
         );
 
-        setError("We couldn't load the locations.");
+        setError(t.locations.loadError);
         setLoading(false);
         return;
       }
@@ -168,7 +170,7 @@ export function LocationsSection() {
           hoursError
         );
 
-        setError("We couldn't load the opening hours.");
+        setError(t.locations.hoursError);
         setLoading(false);
         return;
       }
@@ -190,7 +192,7 @@ export function LocationsSection() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t.locations.loadError, t.locations.hoursError]);
 
   return (
     <section
@@ -199,8 +201,8 @@ export function LocationsSection() {
     >
       <div className="mx-auto max-w-site px-5 sm:px-8">
         <SectionHeading
-          eyebrow="Two rooms in Riga"
-          title="Locations"
+          eyebrow={t.locations.eyebrow}
+          title={t.locations.title}
           light
         />
 
@@ -255,7 +257,7 @@ export function LocationsSection() {
                         />
 
                         <span className="text-xs font-semibold uppercase tracking-label">
-                          {open ? "Open now" : "Closed"}
+                          {open ? t.locations.openNow : t.locations.closed}
                         </span>
                       </div>
 
@@ -283,9 +285,9 @@ export function LocationsSection() {
                         <div>
                           {sortedHours.map((hours) => (
                             <p key={hours.id}>
-                              {DAY_NAMES[hours.day_of_week]}:{" "}
+                              {t.locations.days[hours.day_of_week]}:{" "}
                               {hours.is_closed
-                                ? "Closed"
+                                ? t.locations.closed
                                 : `${formatTime(
                                     hours.open_time
                                   )}–${formatTime(
