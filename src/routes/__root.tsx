@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LanguageProvider } from "@/i18n/LanguageContext";
 import {
   Outlet,
   Link,
@@ -117,8 +118,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-    </QueryClientProvider>
+  <LanguageProvider>
+    {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+    <Outlet />
+  </LanguageProvider>
+</QueryClientProvider>
   );
 }
