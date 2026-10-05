@@ -157,10 +157,10 @@ export const Route = createFileRoute("/")({
       },
     ],
     links: [
-      {
-        rel: "canonical",
-        href: `${siteUrl}/`,
-      },
+      { rel: "canonical", href: `${siteUrl}/` },
+      { rel: "alternate", hrefLang: "en", href: `${siteUrl}/` },
+      { rel: "alternate", hrefLang: "lv", href: `${siteUrl}/lv` },
+      { rel: "alternate", hrefLang: "x-default", href: `${siteUrl}/` },
     ],
     scripts: structuredData
       ? [
