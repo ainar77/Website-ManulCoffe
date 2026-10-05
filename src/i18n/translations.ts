@@ -19,6 +19,33 @@ export const translations = {
       eyebrow: "For right now",
       title: "Seasonal selection",
     },
+    menu: {
+      eyebrow: "Made throughout the day",
+      title: "Menu",
+      intro:
+        "Espresso-led classics, seasonal ideas and food made for unrushed mornings.",
+      categoriesLabel: "Menu categories",
+      loading: "Loading menu…",
+      loadError: "We couldn't load the menu right now.",
+      categories: {
+        Hot: "Hot",
+        Cold: "Cold",
+        Breakfast: "Breakfast",
+        "Sweet Pastries": "Sweet Pastries",
+        "Savoury Pastries": "Savoury Pastries",
+      },
+    },
+    locations: {
+      eyebrow: "Two rooms in Riga",
+      title: "Locations",
+      loading: "Loading locations…",
+      loadError: "We couldn't load the locations.",
+      hoursError: "We couldn't load the opening hours.",
+      openNow: "Open now",
+      closed: "Closed",
+      getDirections: "Get directions",
+      days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    },
     story: {
       eyebrow: "Our approach",
       title: "Coffee, crafted with intention.",
@@ -58,6 +85,33 @@ export const translations = {
       eyebrow: "Šobrīd aktuāls",
       title: "Sezonas piedāvājums",
     },
+    menu: {
+      eyebrow: "Gatavots visas dienas garumā",
+      title: "Ēdienkarte",
+      intro:
+        "Espresso klasika, sezonālas idejas un ēdieni nesteidzīgiem rītiem.",
+      categoriesLabel: "Ēdienkartes kategorijas",
+      loading: "Ielādē ēdienkarti…",
+      loadError: "Pašlaik neizdevās ielādēt ēdienkarti.",
+      categories: {
+        Hot: "Karstie dzērieni",
+        Cold: "Aukstie dzērieni",
+        Breakfast: "Brokastis",
+        "Sweet Pastries": "Saldie konditorejas izstrādājumi",
+        "Savoury Pastries": "Sāļie konditorejas izstrādājumi",
+      },
+    },
+    locations: {
+      eyebrow: "Divas vietas Rīgā",
+      title: "Lokācijas",
+      loading: "Ielādē lokācijas…",
+      loadError: "Neizdevās ielādēt lokācijas.",
+      hoursError: "Neizdevās ielādēt darba laiku.",
+      openNow: "Atvērts",
+      closed: "Slēgts",
+      getDirections: "Saņemt norādes",
+      days: ["P", "O", "T", "C", "Pk", "S", "Sv"],
+    },
     story: {
       eyebrow: "Mūsu pieeja",
       title: "Kafija, kas radīta ar rūpību.",
@@ -82,7 +136,11 @@ export const translations = {
 } as const;
 
 type DeepString<T> = {
-  [K in keyof T]: T[K] extends string ? string : DeepString<T[K]>;
+  [K in keyof T]: T[K] extends string
+    ? string
+    : T[K] extends readonly string[]
+      ? readonly string[]
+      : DeepString<T[K]>;
 };
 
 export type TranslationDictionary = DeepString<
