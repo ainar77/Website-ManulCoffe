@@ -10,7 +10,11 @@ function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
-export function Header() {
+type HeaderProps = {
+  businessName?: string;
+};
+
+export function Header({ businessName = "ManulCoffee" }: HeaderProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -24,8 +28,8 @@ export function Header() {
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${scrolled || open ? "bg-coffee/95 shadow-header backdrop-blur-md" : "bg-coffee/35"}`}>
       <nav className="mx-auto grid h-20 max-w-site grid-cols-[minmax(0,1fr)_auto] items-center px-5 sm:px-8 lg:h-24" aria-label="Main navigation">
-        <a href="#top" onClick={() => setOpen(false)} aria-label="ManulCoffee home">
-          <BrandMark />
+        <a href="#top" onClick={() => setOpen(false)} aria-label={`${businessName} home`}>
+          <BrandMark name={businessName} />
         </a>
         <div className="hidden items-center gap-8 md:flex">
           {links.map((link) => (
