@@ -135,11 +135,11 @@ The project is being developed step by step, from a simple frontend website to a
 
 ### 11. SEO
 
-- [ ] Improve page metadata
-- [ ] Add Open Graph metadata
-- [ ] Add sitemap
-- [ ] Add robots configuration
-- [ ] Add structured restaurant data
+- [x] Improve page metadata
+- [x] Add Open Graph metadata
+- [x] Add sitemap
+- [x] Add robots configuration
+- [x] Add structured restaurant data
 
 ### 12. GDPR & Privacy
 
