@@ -49,7 +49,9 @@ export interface Database {
         Row: {
           id: number;
           name: string;
+          name_lv: string | null;
           description: string | null;
+          description_lv: string | null;
           price: number;
           category: string;
           subcategory: string | null;
@@ -63,7 +65,9 @@ export interface Database {
         Insert: {
           id?: number;
           name: string;
+          name_lv?: string | null;
           description?: string | null;
+          description_lv?: string | null;
           price: number;
           category: string;
           subcategory?: string | null;
@@ -77,7 +81,9 @@ export interface Database {
         Update: {
           id?: number;
           name?: string;
+          name_lv?: string | null;
           description?: string | null;
+          description_lv?: string | null;
           price?: number;
           category?: string;
           subcategory?: string | null;
