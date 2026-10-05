@@ -93,8 +93,7 @@ export function MenuSection() {
           />
 
           <p className="mb-10 max-w-md text-muted-foreground sm:mb-14">
-            Espresso-led classics, seasonal ideas and food made
-            for unrushed mornings.
+            {t.menu.intro}
           </p>
         </div>
 
@@ -115,14 +114,14 @@ export function MenuSection() {
               }
               onClick={() => setActive(category)}
             >
-              {category}
+              {t.menu.categories[category]}
             </Button>
           ))}
         </div>
 
         {loading && (
           <p className="py-12 text-center text-sm text-muted-foreground">
-            Loading menu…
+            {t.menu.loading}
           </p>
         )}
 
