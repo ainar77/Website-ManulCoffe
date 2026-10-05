@@ -18,7 +18,9 @@ type MenuCategory = (typeof menuCategories)[number];
 type MenuItem = {
   id: number;
   name: string;
+  name_lv: string | null;
   description: string | null;
+  description_lv: string | null;
   price: number;
   category: string;
   dietary_tags: string[];
@@ -34,7 +36,7 @@ const cropByCategory: Record<MenuCategory, string> = {
 };
 
 export function MenuSection() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [active, setActive] = useState<MenuCategory>("Hot");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export function MenuSection() {
         await getSupabaseClient()
     .from("menu_items")
     .select(
-      "id, name, description, price, category, dietary_tags, sort_order"
+      "id, name, name_lv, description, description_lv, price, category, dietary_tags, sort_order"
     )
     .eq("is_available", true)
     .order("sort_order", { ascending: true });
@@ -141,6 +143,14 @@ export function MenuSection() {
           >
             {visible.map((item, index) => {
               const tag = item.dietary_tags?.[0];
+              const localizedName =
+                language === "lv"
+                  ? item.name_lv?.trim() || item.name
+                  : item.name;
+              const localizedDescription =
+                language === "lv"
+                  ? item.description_lv?.trim() || item.description
+                  : item.description;
 
               return (
                 <article
@@ -150,7 +160,7 @@ export function MenuSection() {
                   <div className="mb-5 aspect-[4/3] overflow-hidden bg-muted">
                     <img
                       src={menuCollection}
-                      alt={`${item.name} at ManulCoffee`}
+                      alt={`${localizedName} at ManulCoffee`}
                       width={1600}
                       height={1200}
                       loading="lazy"
@@ -164,12 +174,12 @@ export function MenuSection() {
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
                     <div className="min-w-0">
                       <h3 className="font-display text-2xl font-semibold">
-                        {item.name}
+                        {localizedName}
                       </h3>
 
-                      {item.description && (
+                      {localizedDescription && (
                         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                          {item.description}
+                          {localizedDescription}
                         </p>
                       )}
 
