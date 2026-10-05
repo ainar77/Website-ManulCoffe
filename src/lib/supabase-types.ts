@@ -96,7 +96,9 @@ export interface Database {
           id: number;
           business_name: string;
           tagline: string | null;
+          tagline_lv: string | null;
           description: string | null;
+          description_lv: string | null;
           contact_email: string | null;
           phone: string | null;
           website_url: string | null;
@@ -110,7 +112,9 @@ export interface Database {
           id?: number;
           business_name: string;
           tagline?: string | null;
+          tagline_lv?: string | null;
           description?: string | null;
+          description_lv?: string | null;
           contact_email?: string | null;
           phone?: string | null;
           website_url?: string | null;
@@ -124,7 +128,9 @@ export interface Database {
           id?: number;
           business_name?: string;
           tagline?: string | null;
+          tagline_lv?: string | null;
           description?: string | null;
+          description_lv?: string | null;
           contact_email?: string | null;
           phone?: string | null;
           website_url?: string | null;
