@@ -505,25 +505,32 @@ function Footer({
           </nav>
 
           <div className="space-y-5 text-sm text-primary-foreground/70">
-            {locations.map((location) => (
-              <div key={location.id}>
-                <p className="font-semibold text-primary-foreground">
-                  {location.name}
-                </p>
+            {locations.map((location) => {
+              const localizedName =
+                language === "lv"
+                  ? location.name_lv?.trim() || location.name
+                  : location.name;
 
-                <p className="mt-1">
-                  {formatAddress(location)}
-                </p>
+              return (
+                <div key={location.id}>
+                  <p className="font-semibold text-primary-foreground">
+                    {localizedName}
+                  </p>
 
-                <p>
-                  {formatWeekdayHours(
-                    location.business_hours,
-                    t.common.seeOpeningHours,
-                    t.common.weekdays
-                  )}
-                </p>
-              </div>
-            ))}
+                  <p className="mt-1">
+                    {formatAddress(location)}
+                  </p>
+
+                  <p>
+                    {formatWeekdayHours(
+                      location.business_hours,
+                      t.common.seeOpeningHours,
+                      t.common.weekdays
+                    )}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
