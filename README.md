@@ -103,23 +103,35 @@ The project is being developed step by step, from a simple frontend website to a
 - [x] Added automatic menu updates on the public website
 - [x] Completed full menu CRUD functionality
 
-## Planned Development
-
 ### 9. Business Settings & Configuration
 
-- [ ] Move restaurant information from the code to reusable configuration
-- [ ] Add editable business name and branding
-- [ ] Add editable contact information
-- [ ] Add editable addresses and locations
-- [ ] Add opening hours
-- [ ] Create Business Settings management in the admin dashboard
+- [x] Moved restaurant information from the code to reusable Supabase configuration
+- [x] Created the `business_settings`, `business_locations` and `business_hours` database tables
+- [x] Added RLS and admin permissions for business configuration
+- [x] Created the `/admin/settings` dashboard
+- [x] Added editable business name, tagline and description
+- [x] Added editable contact information and website links
+- [x] Added location creation, editing, Hide / Show and deletion
+- [x] Added editable opening hours for each location
+- [x] Connected public locations, contacts and footer to Supabase
+- [x] Connected reservation location selection to active Supabase locations
 
 ### 10. Multilanguage Support
 
-- [ ] Add Latvian
-- [ ] Add English
-- [ ] Add Russian
-- [ ] Make restaurant content manageable in multiple languages
+- [x] Added English and Latvian language support
+- [x] Added an EN / LV language switcher
+- [x] Added persistent language selection with local storage
+- [x] Localized the public website interface
+- [x] Added multilingual business tagline and description
+- [x] Added multilingual menu item names and descriptions
+- [x] Added multilingual menu tags
+- [x] Added multilingual location names and descriptions
+- [x] Localized the reservation form
+- [x] Added English fallback for missing Latvian database content
+- [x] Kept canonical reservation location values compatible with availability checks
+- [x] Completed final EN / LV production verification
+
+## Planned Development
 
 ### 11. SEO
 
