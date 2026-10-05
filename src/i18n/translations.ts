@@ -13,6 +13,7 @@ export const translations = {
       eyebrow: "Specialty coffee · Riga",
       viewMenu: "View menu",
       findLocation: "Find a location",
+      scrollLabel: "Scroll to seasonal selection",
     },
     favorites: {
       eyebrow: "For right now",
@@ -28,17 +29,15 @@ export const translations = {
       title: "Contacts",
       intro:
         "Questions, collaborations, or just want to say hello? We’d love to hear from you.",
-      demoNotice:
-        "All contact details and social profiles shown are fictional demo content.",
+      website: "Website",
     },
     footer: {
-      description:
-        "Specialty coffee and thoughtful food, made for unhurried moments in Riga.",
       rights: "All rights reserved.",
       demo: "Fictional concept for portfolio presentation.",
     },
     common: {
       seeOpeningHours: "See opening hours",
+      weekdays: "Mon–Fri",
     },
   },
   lv: {
@@ -53,6 +52,7 @@ export const translations = {
       eyebrow: "Specializētā kafija · Rīga",
       viewMenu: "Skatīt ēdienkarti",
       findLocation: "Atrast lokāciju",
+      scrollLabel: "Ritināt līdz sezonas piedāvājumam",
     },
     favorites: {
       eyebrow: "Šobrīd aktuāls",
@@ -68,19 +68,23 @@ export const translations = {
       title: "Kontakti",
       intro:
         "Jautājumi, sadarbības piedāvājumi vai vienkārši vēlies sasveicināties? Priecāsimies no Tevis dzirdēt.",
-      demoNotice:
-        "Visa norādītā kontaktinformācija un sociālo tīklu profili ir izdomāts demonstrācijas saturs.",
+      website: "Mājaslapa",
     },
     footer: {
-      description:
-        "Specializētā kafija un pārdomāts ēdiens nesteidzīgiem mirkļiem Rīgā.",
       rights: "Visas tiesības aizsargātas.",
       demo: "Izdomāta koncepcija portfolio prezentācijai.",
     },
     common: {
       seeOpeningHours: "Skatīt darba laiku",
+      weekdays: "P–Pk",
     },
   },
 } as const;
 
-export type TranslationDictionary = (typeof translations)["en"];
+type DeepString<T> = {
+  [K in keyof T]: T[K] extends string ? string : DeepString<T[K]>;
+};
+
+export type TranslationDictionary = DeepString<
+  (typeof translations)["en"]
+>;
