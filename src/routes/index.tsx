@@ -24,6 +24,7 @@ import { favorites } from "@/data/manulcoffee";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Database } from "@/lib/supabase-types";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { useLanguage } from "@/i18n/LanguageContext";
 import type { PublicBusinessSettings } from "@/hooks/useBusinessSettings";
 
 type BusinessLocation =
@@ -104,7 +105,11 @@ function formatTime(time: string | null) {
   return time.slice(0, 5);
 }
 
-function formatWeekdayHours(hours: BusinessHour[]) {
+function formatWeekdayHours(
+  hours: BusinessHour[],
+  seeOpeningHours: string,
+  weekdaysLabel: string
+) {
   const weekdays = hours
     .filter(
       (hour) =>
@@ -117,7 +122,7 @@ function formatWeekdayHours(hours: BusinessHour[]) {
     );
 
   if (weekdays.length !== 5) {
-    return "See opening hours";
+    return seeOpeningHours;
   }
 
   if (
@@ -128,7 +133,7 @@ function formatWeekdayHours(hours: BusinessHour[]) {
         !hour.close_time
     )
   ) {
-    return "See opening hours";
+    return seeOpeningHours;
   }
 
   const first = weekdays[0];
@@ -141,15 +146,17 @@ function formatWeekdayHours(hours: BusinessHour[]) {
   );
 
   if (!sameHours) {
-    return "See opening hours";
+    return seeOpeningHours;
   }
 
-  return `Mon–Fri ${formatTime(
+  return `${weekdaysLabel} ${formatTime(
     first.open_time
   )}–${formatTime(first.close_time)}`;
 }
 
 function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
+  const { t } = useLanguage();
+
   return (
     <section
       id="top"
@@ -168,7 +175,7 @@ function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
 
       <div className="relative mx-auto w-full max-w-site px-5 pb-12 pt-36 sm:px-8 sm:pb-16 lg:pb-20">
         <p className="mb-5 text-xs font-semibold uppercase tracking-label text-accent">
-          Specialty coffee · Riga
+          {t.hero.eyebrow}
         </p>
 
         <h1 className="max-w-5xl font-display text-6xl font-semibold leading-[0.88] sm:text-8xl lg:text-[8rem]">
@@ -195,7 +202,7 @@ function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
                 scrollTo("menu")
               }
             >
-              View menu
+              {t.hero.viewMenu}
             </Button>
 
             <Button
@@ -205,14 +212,14 @@ function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
                 scrollTo("locations")
               }
             >
-              Find a location
+              {t.hero.findLocation}
             </Button>
           </div>
         </div>
 
         <a
           href="#favorites"
-          aria-label="Scroll to seasonal selection"
+          aria-label={t.hero.scrollLabel}
           className="absolute bottom-4 right-5 hidden size-11 place-items-center rounded-full border border-primary-foreground/30 transition-colors hover:bg-primary-foreground/10 sm:grid"
         >
           <ArrowDown className="size-4" />
@@ -223,6 +230,8 @@ function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
 }
 
 function Favorites() {
+  const { t } = useLanguage();
+
   return (
     <section
       id="favorites"
@@ -230,8 +239,8 @@ function Favorites() {
     >
       <div className="mx-auto max-w-site px-5 sm:px-8">
         <SectionHeading
-          eyebrow="For right now"
-          title="Seasonal selection"
+          eyebrow={t.favorites.eyebrow}
+          title={t.favorites.title}
         />
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -287,16 +296,18 @@ function Favorites() {
 }
 
 function Story({ settings }: { settings: PublicBusinessSettings | null }) {
+  const { t } = useLanguage();
+
   return (
     <section className="bg-background py-section">
       <div className="mx-auto grid max-w-site gap-10 px-5 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-20">
         <div className="order-2 lg:order-1">
           <p className="mb-4 text-xs font-semibold uppercase tracking-label text-accent">
-            Our approach
+            {t.story.eyebrow}
           </p>
 
           <h2 className="font-display text-5xl font-semibold leading-none sm:text-6xl">
-            Coffee, crafted with intention.
+            {t.story.title}
           </h2>
 
           <p className="mt-7 max-w-lg text-base leading-8 text-muted-foreground">
@@ -305,7 +316,7 @@ function Story({ settings }: { settings: PublicBusinessSettings | null }) {
           </p>
 
           <p className="mt-6 text-sm font-semibold">
-            Sourced thoughtfully. Served warmly.
+            {t.story.closing}
           </p>
         </div>
 
@@ -331,6 +342,7 @@ function Contacts({
   locations: LocationWithHours[];
   settings: PublicBusinessSettings | null;
 }) {
+  const { t } = useLanguage();
   const mainLocation = locations[0];
 
   const mainAddress = mainLocation
@@ -357,14 +369,13 @@ function Contacts({
     >
       <div className="mx-auto max-w-site px-5 sm:px-8">
         <SectionHeading
-          eyebrow="Say hello"
-          title="Contacts"
+          eyebrow={t.contacts.eyebrow}
+          title={t.contacts.title}
         />
 
         <div className="grid gap-10 border-t border-accent-foreground/25 pt-8 lg:grid-cols-2">
           <p className="max-w-xl font-display text-3xl leading-snug sm:text-4xl">
-            Questions, collaborations, or just want
-            to say hello? We’d love to hear from you.
+            {t.contacts.intro}
           </p>
 
           <div className="grid gap-5 text-sm sm:grid-cols-2">
@@ -396,7 +407,7 @@ function Contacts({
 
             {website && (
               <a href={website} target="_blank" rel="noopener noreferrer" className="contact-link">
-                Website
+                {t.contacts.website}
               </a>
             )}
 
@@ -417,7 +428,7 @@ function Contacts({
         </div>
 
         <p className="mt-12 text-xs text-accent-foreground/70">
-          Fictional concept for portfolio presentation.
+          {t.footer.demo}
         </p>
       </div>
     </section>
@@ -431,6 +442,15 @@ function Footer({
   locations: LocationWithHours[];
   settings: PublicBusinessSettings | null;
 }) {
+  const { t } = useLanguage();
+
+  const footerLinks = [
+    { id: "menu", label: t.nav.menu },
+    { id: "locations", label: t.nav.locations },
+    { id: "reviews", label: t.nav.reviews },
+    { id: "contacts", label: t.nav.contacts },
+  ];
+
   return (
     <footer className="bg-coffee py-12 text-primary-foreground">
       <div className="mx-auto max-w-site px-5 sm:px-8">
@@ -452,18 +472,13 @@ function Footer({
             aria-label="Footer navigation"
             className="flex flex-col items-start gap-3 text-sm"
           >
-            {[
-              "Menu",
-              "Locations",
-              "Reviews",
-              "Contacts",
-            ].map((link) => (
+            {footerLinks.map((link) => (
               <a
-                key={link}
-                href={`#${link.toLowerCase()}`}
+                key={link.id}
+                href={`#${link.id}`}
                 className="hover:text-accent"
               >
-                {link}
+                {link.label}
               </a>
             ))}
           </nav>
@@ -481,7 +496,9 @@ function Footer({
 
                 <p>
                   {formatWeekdayHours(
-                    location.business_hours
+                    location.business_hours,
+                    t.common.seeOpeningHours,
+                    t.common.weekdays
                   )}
                 </p>
               </div>
@@ -491,12 +508,11 @@ function Footer({
 
         <div className="mt-8 flex flex-col gap-3 text-xs text-primary-foreground/50 sm:flex-row sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {settings?.business_name?.trim() || "ManulCoffee"}. All rights reserved.
+            © {new Date().getFullYear()} {settings?.business_name?.trim() || "ManulCoffee"}. {t.footer.rights}
           </p>
 
           <p>
-            Fictional concept for portfolio
-            presentation.
+            {t.footer.demo}
           </p>
         </div>
       </div>
