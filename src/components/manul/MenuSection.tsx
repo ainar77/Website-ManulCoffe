@@ -35,6 +35,13 @@ const cropByCategory: Record<MenuCategory, string> = {
   "Savoury Pastries": "object-[88%_88%]",
 };
 
+const tagTranslationsLv: Record<string, string> = {
+  Popular: "Populārs",
+  New: "Jaunums",
+  Vegan: "Vegānisks",
+  Vegetarian: "Veģetārs",
+};
+
 export function MenuSection() {
   const { language, t } = useLanguage();
   const [active, setActive] = useState<MenuCategory>("Hot");
@@ -143,6 +150,10 @@ export function MenuSection() {
           >
             {visible.map((item, index) => {
               const tag = item.dietary_tags?.[0];
+              const localizedTag =
+                language === "lv" && tag
+                  ? tagTranslationsLv[tag] || tag
+                  : tag;
               const localizedName =
                 language === "lv"
                   ? item.name_lv?.trim() || item.name
@@ -185,7 +196,7 @@ export function MenuSection() {
 
                       {tag && (
                         <span className="mt-3 inline-block text-xs font-semibold uppercase tracking-label text-accent">
-                          {tag}
+                          {localizedTag}
                         </span>
                       )}
                     </div>
