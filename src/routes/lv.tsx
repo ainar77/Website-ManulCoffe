@@ -119,6 +119,9 @@ export const Route = createFileRoute("/lv")({
       ],
       links: [
         { rel: "canonical", href: `${siteUrl}/lv` },
+        { rel: "alternate", hrefLang: "en", href: `${siteUrl}/` },
+        { rel: "alternate", hrefLang: "lv", href: `${siteUrl}/lv` },
+        { rel: "alternate", hrefLang: "x-default", href: `${siteUrl}/` },
       ],
       scripts: structuredData
         ? [
