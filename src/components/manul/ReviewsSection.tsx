@@ -7,12 +7,19 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { creators, reviews } from "@/data/manulcoffee";
+import {
+  creators,
+  creatorsLv,
+  reviews,
+  reviewsLv,
+} from "@/data/manulcoffee";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { SectionHeading } from "./SectionHeading";
 
 export function ReviewsSection() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+  const localizedReviews = language === "lv" ? reviewsLv : reviews;
+  const localizedCreators = language === "lv" ? creatorsLv : creators;
 
   return (
     <section id="reviews" className="scroll-mt-20 bg-surface py-section">
@@ -24,7 +31,7 @@ export function ReviewsSection() {
 
         <Carousel opts={{ align: "start", loop: true }} className="mb-20">
           <CarouselContent className="-ml-5">
-            {reviews.map((review) => (
+            {localizedReviews.map((review) => (
               <CarouselItem
                 key={review.name}
                 className="basis-[88%] pl-5 sm:basis-1/2 lg:basis-1/3"
@@ -73,7 +80,7 @@ export function ReviewsSection() {
 
           <Carousel opts={{ align: "start", loop: true }}>
             <CarouselContent>
-              {creators.map((creator, index) => (
+              {localizedCreators.map((creator, index) => (
                 <CarouselItem
                   key={creator.name}
                   className="basis-[88%] sm:basis-1/2"
