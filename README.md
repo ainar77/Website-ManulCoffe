@@ -131,8 +131,6 @@ The project is being developed step by step, from a simple frontend website to a
 - [x] Kept canonical reservation location values compatible with availability checks
 - [x] Completed final EN / LV production verification
 
-## Planned Development
-
 ### 11. SEO
 
 - [x] Improve page metadata
