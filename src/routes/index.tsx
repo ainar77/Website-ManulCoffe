@@ -37,10 +37,13 @@ type LocationWithHours = BusinessLocation & {
   business_hours: BusinessHour[];
 };
 
+const siteUrl = "https://website-manulcoffe.pages.dev";
 const title = "ManulCoffee — Specialty Coffee in Riga";
 
 const description =
   "ManulCoffee is a modern specialty coffee shop in Riga serving carefully crafted coffee, fresh pastries, and a relaxed city atmosphere.";
+
+const socialImageUrl = new URL(heroImage, siteUrl).href;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,6 +52,10 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content: description,
+      },
+      {
+        name: "robots",
+        content: "index, follow",
       },
       {
         property: "og:title",
@@ -64,17 +71,53 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:url",
-        content: "/",
+        content: `${siteUrl}/`,
+      },
+      {
+        property: "og:site_name",
+        content: "ManulCoffee",
+      },
+      {
+        property: "og:locale",
+        content: "en_US",
+      },
+      {
+        property: "og:image",
+        content: socialImageUrl,
+      },
+      {
+        property: "og:image:alt",
+        content: "ManulCoffee specialty coffee shop in Riga",
+      },
+      {
+        property: "og:image:width",
+        content: "1920",
+      },
+      {
+        property: "og:image:height",
+        content: "1200",
       },
       {
         name: "twitter:card",
         content: "summary_large_image",
       },
+      {
+        name: "twitter:title",
+        content: title,
+      },
+      {
+        name: "twitter:description",
+        content: description,
+      },
+      {
+        name: "twitter:image",
+        content: socialImageUrl,
+      },
     ],
     links: [
       {
         rel: "canonical",
-        href: "/",
+        href: `${siteUrl}/`,
       },
     ],
   }),
@@ -550,12 +593,6 @@ function Footer({
 
 function ManulCoffeePage() {
   const { settings } = useBusinessSettings();
-
-  useEffect(() => {
-    if (settings?.business_name?.trim()) {
-      document.title = `${settings.business_name.trim()} — Specialty Coffee in Riga`;
-    }
-  }, [settings?.business_name]);
 
   const [locations, setLocations] = useState<
     LocationWithHours[]
