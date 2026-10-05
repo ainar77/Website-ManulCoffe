@@ -26,6 +26,7 @@ import type { Database } from "@/lib/supabase-types";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { useLanguage } from "@/i18n/LanguageContext";
 import type { PublicBusinessSettings } from "@/hooks/useBusinessSettings";
+import { getPublicBusinessSeoData } from "@/lib/publicBusinessSeo.functions";
 
 type BusinessLocation =
   Database["public"]["Tables"]["business_locations"]["Row"];
@@ -45,8 +46,83 @@ const description =
 
 const socialImageUrl = new URL(heroImage, siteUrl).href;
 
+const schemaDays = [
+  "https://schema.org/Monday",
+  "https://schema.org/Tuesday",
+  "https://schema.org/Wednesday",
+  "https://schema.org/Thursday",
+  "https://schema.org/Friday",
+  "https://schema.org/Saturday",
+  "https://schema.org/Sunday",
+] as const;
+
+type PublicBusinessSeoData = Awaited<
+  ReturnType<typeof getPublicBusinessSeoData>
+>;
+
+function buildLocalBusinessStructuredData(
+  data: PublicBusinessSeoData | undefined,
+) {
+  if (!data || data.locations.length === 0) return null;
+
+  const businessName = data.settings?.business_name?.trim() || "ManulCoffee";
+  const businessDescription =
+    data.settings?.description?.trim() || description;
+  const businessPhone = data.settings?.phone?.trim() || undefined;
+  const businessEmail = data.settings?.contact_email?.trim() || undefined;
+  const instagramUrl = data.settings?.instagram_url?.trim() || undefined;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": data.locations.map((location) => {
+      const openingHoursSpecification = [...location.business_hours]
+        .filter(
+          (hour) =>
+            !hour.is_closed &&
+            hour.open_time &&
+            hour.close_time &&
+            hour.day_of_week >= 0 &&
+            hour.day_of_week <= 6,
+        )
+        .sort((a, b) => a.day_of_week - b.day_of_week)
+        .map((hour) => ({
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: schemaDays[hour.day_of_week],
+          opens: formatTime(hour.open_time),
+          closes: formatTime(hour.close_time),
+        }));
+
+      return {
+        "@type": "CafeOrCoffeeShop",
+        "@id": `${siteUrl}/#location-${location.id}`,
+        name: location.name?.trim() || businessName,
+        description: location.description?.trim() || businessDescription,
+        url: `${siteUrl}/#locations`,
+        image: socialImageUrl,
+        telephone: location.phone?.trim() || businessPhone,
+        email: businessEmail,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: location.address,
+          addressLocality: location.city,
+          postalCode: location.postal_code || undefined,
+          addressCountry: "LV",
+        },
+        openingHoursSpecification,
+        acceptsReservations: true,
+        hasMenu: `${siteUrl}/#menu`,
+        ...(instagramUrl ? { sameAs: [instagramUrl] } : {}),
+      };
+    }),
+  };
+}
+
 export const Route = createFileRoute("/")({
-  head: () => ({
+  loader: async () => getPublicBusinessSeoData(),
+  head: ({ loaderData }) => {
+    const structuredData = buildLocalBusinessStructuredData(loaderData);
+
+    return {
     meta: [
       { title },
       {
@@ -120,7 +196,16 @@ export const Route = createFileRoute("/")({
         href: `${siteUrl}/`,
       },
     ],
-  }),
+    scripts: structuredData
+      ? [
+          {
+            type: "application/ld+json",
+            children: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          },
+        ]
+      : [],
+    };
+  },
   component: ManulCoffeePage,
 });
 
