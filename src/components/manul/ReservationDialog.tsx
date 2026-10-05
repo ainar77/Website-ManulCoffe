@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getSupabaseClient } from "@/integrations/supabase/client";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface FormState {
   customerName: string;
@@ -92,6 +93,7 @@ export function ReservationDialog({
 }: {
   trigger: ReactNode;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -142,7 +144,7 @@ export function ReservationDialog({
 
           setLocationOptions([]);
           setLocationsError(
-            "We couldn't load the locations. Please try again."
+            t.reservation.locationsError
           );
 
           return;
@@ -172,7 +174,7 @@ export function ReservationDialog({
 
         setLocationOptions([]);
         setLocationsError(
-          "We couldn't load the locations. Please try again."
+          t.reservation.locationsError
         );
       } finally {
         if (!cancelled) {
@@ -186,7 +188,7 @@ export function ReservationDialog({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, t.reservation.locationsError]);
 
   const update = (
     field: keyof FormState,
@@ -234,7 +236,7 @@ export function ReservationDialog({
           setUnavailableTimes([]);
 
           setAvailabilityError(
-            "We couldn't check availability right now. Please try again."
+            t.reservation.availabilityError
           );
 
           return;
@@ -254,13 +256,13 @@ export function ReservationDialog({
         setUnavailableTimes([]);
 
         setAvailabilityError(
-          "We couldn't check availability right now. Please try again."
+          t.reservation.availabilityError
         );
       } finally {
         setAvailabilityLoading(false);
       }
     },
-    []
+    [t.reservation.availabilityError]
   );
 
   // Re-check available times whenever location or date changes.
@@ -307,59 +309,59 @@ export function ReservationDialog({
 
     if (!form.customerName.trim()) {
       next.customerName =
-        "Please enter your name.";
+        t.reservation.nameRequired;
     }
 
     if (!form.email.trim()) {
       next.email =
-        "Please enter your email.";
+        t.reservation.emailRequired;
     } else if (
       !emailPattern.test(form.email.trim())
     ) {
       next.email =
-        "Please enter a valid email address.";
+        t.reservation.emailInvalid;
     }
 
     if (!form.phone) {
       next.phone =
-        "Please enter your phone number.";
+        t.reservation.phoneRequired;
     } else if (
       !phoneDigitsPattern.test(form.phone)
     ) {
       next.phone =
-        "Please enter exactly 8 digits.";
+        t.reservation.phoneInvalid;
     }
 
     if (!form.location) {
       next.location =
-        "Please choose a location.";
+        t.reservation.locationRequired;
     }
 
     if (!form.date) {
       next.date =
-        "Please choose a date.";
+        t.reservation.dateRequired;
     } else if (
       form.date < todayString()
     ) {
       next.date =
-        "Please choose a date that is not in the past.";
+        t.reservation.datePast;
     }
 
     if (!form.time) {
       next.time =
-        "Please choose a time.";
+        t.reservation.timeRequired;
     } else if (
       unavailableTimes.includes(form.time)
     ) {
       next.time =
-        "This reservation time is no longer available.";
+        t.reservation.timeUnavailable;
     }
 
     const guests = Number(form.guests);
 
     if (!form.guests) {
       next.guests =
-        "Please enter the number of guests.";
+        t.reservation.guestsRequired;
     } else if (
       Number.isNaN(guests) ||
       !Number.isInteger(guests) ||
@@ -367,7 +369,7 @@ export function ReservationDialog({
       guests > 8
     ) {
       next.guests =
-        "Please enter a number of guests from 1 to 8.";
+        t.reservation.guestsInvalid;
     }
 
     setErrors(next);
@@ -414,7 +416,7 @@ export function ReservationDialog({
         // Unique active reservation slot conflict.
         if (error.code === "23505") {
           setSubmitError(
-            "That time was just booked by another guest. Please choose another available time."
+            t.reservation.slotTaken
           );
 
           setForm((current) => ({
@@ -431,7 +433,7 @@ export function ReservationDialog({
         }
 
         setSubmitError(
-          "We couldn't save your reservation just now. Please try again in a moment."
+          t.reservation.saveError
         );
 
         return;
@@ -485,7 +487,7 @@ export function ReservationDialog({
       );
 
       setSubmitError(
-        "We couldn't save your reservation just now. Please try again in a moment."
+        t.reservation.saveError
       );
     } finally {
       setSubmitting(false);
@@ -524,13 +526,11 @@ export function ReservationDialog({
 
             <DialogHeader className="items-center text-center">
               <DialogTitle className="font-display text-2xl">
-                Reservation received
+                {t.reservation.receivedTitle}
               </DialogTitle>
 
               <DialogDescription className="max-w-xs">
-                Thank you, your table request has
-                been sent. We'll confirm your
-                reservation by email shortly.
+                {t.reservation.receivedDescription}
               </DialogDescription>
             </DialogHeader>
 
@@ -541,20 +541,18 @@ export function ReservationDialog({
                 handleOpenChange(false)
               }
             >
-              Done
+              {t.reservation.done}
             </Button>
           </div>
         ) : (
           <>
             <DialogHeader>
               <DialogTitle className="font-display text-3xl">
-                Reserve a table
+                {t.reservation.title}
               </DialogTitle>
 
               <DialogDescription>
-                Tell us when you'd like to visit
-                and we'll set a table aside for
-                you.
+                {t.reservation.description}
               </DialogDescription>
             </DialogHeader>
 
@@ -566,13 +564,13 @@ export function ReservationDialog({
               {/* Name */}
               <div className="grid gap-2">
                 <Label htmlFor="reservation-name">
-                  Name
+                  {t.reservation.name}
                 </Label>
 
                 <Input
                   id="reservation-name"
                   autoComplete="name"
-                  placeholder="Your full name"
+                  placeholder={t.reservation.fullNamePlaceholder}
                   value={form.customerName}
                   onChange={(event) =>
                     update(
@@ -596,7 +594,7 @@ export function ReservationDialog({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-email">
-                    Email
+                    {t.reservation.email}
                   </Label>
 
                   <Input
@@ -625,7 +623,7 @@ export function ReservationDialog({
 
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-phone">
-                    Phone
+                    {t.reservation.phone}
                   </Label>
 
                   <div className="flex overflow-hidden rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
@@ -673,7 +671,7 @@ export function ReservationDialog({
               {/* Location */}
               <div className="grid gap-2">
                 <Label htmlFor="reservation-location">
-                  Location
+                  {t.reservation.location}
                 </Label>
 
                 <Select
@@ -695,8 +693,8 @@ export function ReservationDialog({
                     <SelectValue
                       placeholder={
                         locationsLoading
-                          ? "Loading locations..."
-                          : "Choose a café"
+                          ? t.reservation.loadingLocations
+                          : t.reservation.chooseCafe
                       }
                     />
                   </SelectTrigger>
@@ -725,8 +723,7 @@ export function ReservationDialog({
                   !locationsError &&
                   locationOptions.length === 0 && (
                     <p className="text-sm text-muted-foreground">
-                      No locations are currently
-                      available.
+                      {t.reservation.noLocations}
                     </p>
                   )}
 
@@ -742,7 +739,7 @@ export function ReservationDialog({
                 {/* Date */}
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-date">
-                    Date
+                    {t.reservation.date}
                   </Label>
 
                   <Input
@@ -771,7 +768,7 @@ export function ReservationDialog({
                 {/* Time */}
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-time">
-                    Time
+                    {t.reservation.time}
                   </Label>
 
                   <Select
@@ -797,8 +794,8 @@ export function ReservationDialog({
                       <SelectValue
                         placeholder={
                           availabilityLoading
-                            ? "Checking times..."
-                            : "Choose a time"
+                            ? t.reservation.checkingTimes
+                            : t.reservation.chooseTime
                         }
                       />
                     </SelectTrigger>
@@ -820,7 +817,7 @@ export function ReservationDialog({
                               }
                             >
                               {unavailable
-                                ? `${time} — Booked`
+                                ? `${time} — ${t.reservation.booked}`
                                 : time}
                             </SelectItem>
                           );
@@ -831,7 +828,7 @@ export function ReservationDialog({
 
                   {availabilityLoading && (
                     <p className="text-sm text-muted-foreground">
-                      Checking available times...
+                      {t.reservation.checkingAvailableTimes}
                     </p>
                   )}
 
@@ -848,8 +845,7 @@ export function ReservationDialog({
                     unavailableTimes.length ===
                       reservationTimes.length && (
                       <p className="text-sm text-destructive">
-                        No reservation times are
-                        available for this date.
+                        {t.reservation.noTimes}
                       </p>
                     )}
 
@@ -863,7 +859,7 @@ export function ReservationDialog({
                 {/* Guests */}
                 <div className="grid gap-2">
                   <Label htmlFor="reservation-guests">
-                    Guests
+                    {t.reservation.guests}
                   </Label>
 
                   <Input
@@ -916,8 +912,8 @@ export function ReservationDialog({
                 )}
 
                 {submitting
-                  ? "Sending your reservation…"
-                  : "Confirm reservation"}
+                  ? t.reservation.sending
+                  : t.reservation.confirm}
               </Button>
             </form>
           </>
