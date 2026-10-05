@@ -22,7 +22,9 @@ type BusinessSettingsUpdate = Database["public"]["Tables"]["business_settings"][
 type SettingsForm = {
   business_name: string;
   tagline: string;
+  tagline_lv: string;
   description: string;
+  description_lv: string;
   contact_email: string;
   phone: string;
   website_url: string;
@@ -34,7 +36,9 @@ type SettingsForm = {
 const emptyForm: SettingsForm = {
   business_name: "",
   tagline: "",
+  tagline_lv: "",
   description: "",
+  description_lv: "",
   contact_email: "",
   phone: "",
   website_url: "",
@@ -58,7 +62,9 @@ function toForm(settings: BusinessSettings): SettingsForm {
   return {
     business_name: settings.business_name ?? "",
     tagline: settings.tagline ?? "",
+    tagline_lv: settings.tagline_lv ?? "",
     description: settings.description ?? "",
+    description_lv: settings.description_lv ?? "",
     contact_email: settings.contact_email ?? "",
     phone: settings.phone ?? "",
     website_url: settings.website_url ?? "",
@@ -232,7 +238,9 @@ function AdminSettingsPage() {
     const payload: BusinessSettingsUpdate = {
       business_name: form.business_name.trim(),
       tagline: optionalText(form.tagline),
+      tagline_lv: optionalText(form.tagline_lv),
       description: optionalText(form.description),
+      description_lv: optionalText(form.description_lv),
       contact_email: optionalText(form.contact_email),
       phone: optionalText(form.phone),
       website_url: optionalText(form.website_url),
@@ -330,13 +338,32 @@ function AdminSettingsPage() {
               <CardContent className="space-y-4">
                 <Field id="business_name" label="Business name" value={form.business_name}
                   onChange={(value) => update("business_name", value)} required />
-                <Field id="tagline" label="Tagline" value={form.tagline}
-                  onChange={(value) => update("tagline", value)} placeholder="Coffee worth slowing down for" />
-                <div className="space-y-1.5">
-                  <label htmlFor="description" className="block text-sm font-medium text-foreground">Description</label>
-                  <textarea id="description" name="description" rows={5} value={form.description}
-                    onChange={(event) => update("description", event.target.value)}
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field id="tagline" label="Tagline — English" value={form.tagline}
+                    onChange={(value) => update("tagline", value)} placeholder="Coffee worth slowing down for" />
+                  <Field id="tagline_lv" label="Tagline — Latviešu" value={form.tagline_lv}
+                    onChange={(value) => update("tagline_lv", value)} placeholder="Kafija, kuras dēļ ir vērts apstāties" />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label htmlFor="description" className="block text-sm font-medium text-foreground">
+                      Description — English
+                    </label>
+                    <textarea id="description" name="description" rows={6} value={form.description}
+                      onChange={(event) => update("description", event.target.value)}
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="description_lv" className="block text-sm font-medium text-foreground">
+                      Description — Latviešu
+                    </label>
+                    <textarea id="description_lv" name="description_lv" rows={6} value={form.description_lv}
+                      onChange={(event) => update("description_lv", event.target.value)}
+                      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
