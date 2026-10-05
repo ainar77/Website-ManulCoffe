@@ -51,7 +51,9 @@ const MENU_TAGS = [
 
 const emptyForm = {
   name: "",
+  name_lv: "",
   description: "",
+  description_lv: "",
   price: "",
   category: "Hot",
   subcategory: "drinks",
@@ -155,7 +157,9 @@ function AdminMenuPage() {
 function startEditing(item: MenuItem) {
   setForm({
     name: item.name,
+    name_lv: item.name_lv ?? "",
     description: item.description ?? "",
+    description_lv: item.description_lv ?? "",
     price: String(item.price),
     category: item.category,
     subcategory: item.subcategory ?? "",
@@ -252,7 +256,9 @@ async function handleSaveItem(
   setSaveError(null);
 
   const name = form.name.trim();
+  const nameLv = form.name_lv.trim();
   const description = form.description.trim();
+  const descriptionLv = form.description_lv.trim();
   const price = Number(form.price);
   const sortOrder = Number(form.sort_order);
 
@@ -285,7 +291,9 @@ async function handleSaveItem(
 
   const itemData = {
     name,
+    name_lv: nameLv || null,
     description: description || null,
+    description_lv: descriptionLv || null,
     price,
     category: form.category,
     subcategory: form.subcategory || null,
@@ -482,7 +490,7 @@ async function handleSaveItem(
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="menu-name">
-              Name
+              Name — English
             </Label>
 
             <Input
@@ -500,44 +508,84 @@ async function handleSaveItem(
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="menu-price">
-              Price (€)
+            <Label htmlFor="menu-name-lv">
+              Name — Latviešu
             </Label>
 
             <Input
-              id="menu-price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.price}
+              id="menu-name-lv"
+              value={form.name_lv}
               disabled={saving}
               onChange={(event) =>
                 setForm((current) => ({
                   ...current,
-                  price: event.target.value,
+                  name_lv: event.target.value,
                 }))
               }
-              placeholder="4.20"
+              placeholder="Kapučīno"
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="menu-description">
-            Description
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="menu-description">
+              Description — English
+            </Label>
+
+            <Input
+              id="menu-description"
+              value={form.description}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  description: event.target.value,
+                }))
+              }
+              placeholder="Short description"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="menu-description-lv">
+              Description — Latviešu
+            </Label>
+
+            <Input
+              id="menu-description-lv"
+              value={form.description_lv}
+              disabled={saving}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  description_lv: event.target.value,
+                }))
+              }
+              placeholder="Īss apraksts"
+            />
+          </div>
+        </div>
+
+        <div className="max-w-sm space-y-2">
+          <Label htmlFor="menu-price">
+            Price (€)
           </Label>
 
           <Input
-            id="menu-description"
-            value={form.description}
+            id="menu-price"
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.price}
             disabled={saving}
             onChange={(event) =>
               setForm((current) => ({
                 ...current,
-                description: event.target.value,
+                price: event.target.value,
               }))
             }
-            placeholder="Short description"
+            placeholder="4.20"
           />
         </div>
 
