@@ -155,7 +155,17 @@ function formatWeekdayHours(
 }
 
 function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+
+  const tagline =
+    language === "lv"
+      ? settings?.tagline_lv?.trim() || settings?.tagline?.trim()
+      : settings?.tagline?.trim();
+
+  const description =
+    language === "lv"
+      ? settings?.description_lv?.trim() || settings?.description?.trim()
+      : settings?.description?.trim();
 
   return (
     <section
@@ -185,11 +195,11 @@ function Hero({ settings }: { settings: PublicBusinessSettings | null }) {
         <div className="mt-7 grid gap-8 border-t border-primary-foreground/30 pt-7 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <p className="font-display text-2xl sm:text-3xl">
-              {settings?.tagline?.trim() || "Coffee worth slowing down for."}
+              {tagline || "Coffee worth slowing down for."}
             </p>
 
            <p className="mt-3 max-w-lg text-sm leading-relaxed text-primary-foreground/70">
-              {settings?.description?.trim() ||
+              {description ||
               "Carefully sourced beans, thoughtful food, and warm rooms made for the rhythm of Riga."}
             </p>
           </div>
@@ -297,7 +307,12 @@ function Favorites() {
 }
 
 function Story({ settings }: { settings: PublicBusinessSettings | null }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+
+  const description =
+    language === "lv"
+      ? settings?.description_lv?.trim() || settings?.description?.trim()
+      : settings?.description?.trim();
 
   return (
     <section className="bg-background py-section">
@@ -312,7 +327,7 @@ function Story({ settings }: { settings: PublicBusinessSettings | null }) {
           </h2>
 
           <p className="mt-7 max-w-lg text-base leading-8 text-muted-foreground">
-            {settings?.description?.trim() ||
+            {description ||
               "ManulCoffee is a specialty coffee space built around quality, community, and considered details. Inspired by slow mornings and good conversations, we make each cup with care and keep our doors open to the rhythm of the city."}
           </p>
 
@@ -443,7 +458,12 @@ function Footer({
   locations: LocationWithHours[];
   settings: PublicBusinessSettings | null;
 }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+
+  const tagline =
+    language === "lv"
+      ? settings?.tagline_lv?.trim() || settings?.tagline?.trim()
+      : settings?.tagline?.trim();
 
   const footerLinks = [
     { id: "menu", label: t.nav.menu },
@@ -464,7 +484,7 @@ function Footer({
 />
 
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-primary-foreground/60">
-              {settings?.tagline?.trim() ||
+              {tagline ||
                 "Specialty coffee and thoughtful food, made for unhurried moments in Riga."}
             </p>
           </div>
