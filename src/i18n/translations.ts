@@ -118,6 +118,7 @@ export const translations = {
     footer: {
       rights: "All rights reserved.",
       demo: "Fictional concept for portfolio presentation.",
+      privacy: "Privacy Policy",
     },
     common: {
       seeOpeningHours: "See opening hours",
@@ -241,6 +242,7 @@ export const translations = {
     footer: {
       rights: "Visas tiesības aizsargātas.",
       demo: "Izdomāta koncepcija portfolio prezentācijai.",
+      privacy: "Privātuma politika",
     },
     common: {
       seeOpeningHours: "Skatīt darba laiku",
