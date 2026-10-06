@@ -102,6 +102,9 @@ export const translations = {
         "That time was just booked by another guest. Please choose another available time.",
       saveError:
         "We couldn't save your reservation just now. Please try again in a moment.",
+      privacyNotice:
+        "We use your personal data to manage your reservation and contact you about it.",
+      privacyPolicy: "Privacy Policy",
     },
     story: {
       eyebrow: "Our approach",
@@ -226,6 +229,9 @@ export const translations = {
         "Šo laiku tikko rezervēja cits viesis. Lūdzu, izvēlieties citu pieejamu laiku.",
       saveError:
         "Pašlaik neizdevās saglabāt rezervāciju. Lūdzu, pēc brīža mēģiniet vēlreiz.",
+      privacyNotice:
+        "Mēs izmantojam jūsu personas datus, lai pārvaldītu rezervāciju un sazinātos ar jums par to.",
+      privacyPolicy: "Privātuma politika",
     },
     story: {
       eyebrow: "Mūsu pieeja",
