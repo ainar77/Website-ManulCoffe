@@ -48,7 +48,7 @@ function LatvianPrivacyRoute() {
       updatedDate="2026. gada 6. oktobrī"
       intro="Šajā politikā ir izskaidrots, kādi personas dati tiek apstrādāti, izmantojot ManulCoffee tīmekļvietni un iesniedzot galdiņa rezervāciju, kādiem nolūkiem dati tiek izmantoti, kuri pakalpojumu sniedzēji ir iesaistīti un kādas ir Jūsu tiesības."
       demoNoticeTitle="Portfolio demonstrācijas paziņojums"
-      demoNotice="ManulCoffee ir izdomāta portfolio koncepcija. Šī tīmekļvietne demonstrē atkārtoti izmantojamu restorāna platformu, un to nedrīkst uzskatīt par gatavu reāla restorāna privātuma politiku, kamēr nav norādīti faktiskā pārziņa rekvizīti, pārbaudīta hostinga un starptautiskās datu nosūtīšanas kārtība un ieviesti zemāk aprakstītie datu glabāšanas termiņi."
+      demoNotice="ManulCoffee ir izdomāta portfolio koncepcija. Šī tīmekļvietne demonstrē atkārtoti izmantojamu restorāna platformu, un to nedrīkst uzskatīt par gatavu reāla restorāna privātuma politiku, kamēr nav norādīti faktiskā pārziņa rekvizīti, pārbaudīta hostinga un starptautiskās datu nosūtīšanas kārtība un izvērtēts, vai konfigurētais datu glabāšanas termiņš ir piemērots faktiskajam operatoram."
       homeLabel="Atpakaļ uz ManulCoffee"
       alternateLabel="EN"
       alternateHref="/privacy"
@@ -103,8 +103,8 @@ function LatvianPrivacyRoute() {
         {
           title: "6. Datu glabāšanas termiņš",
           paragraphs: [
-            "Pašreizējā demonstrācijas versijā vēl nav ieviesta veco rezervāciju automātiska dzēšana. Ieraksti tiek glabāti līdz brīdim, kad administrators tos manuāli izdzēš. Tas ir zināms pirmsprodukcijas ierobežojums.",
-            "Pirms platforma tiek izmantota reālu klientu rezervācijām, operatoram ir jānosaka pamatots glabāšanas termiņš un jāievieš datu dzēšana vai anonimizācija, lai rezervācijas dati netiktu glabāti ilgāk, nekā nepieciešams. Tas tiks ieviests šī projekta datu glabāšanas posmā.",
+            "Supabase datubāzē glabātie rezervāciju ieraksti tiek automātiski dzēsti, kad kopš rezervācijas datuma ir pagājušas vairāk nekā 90 dienas. Šī glabāšanas noteikuma izpildei katru dienu tiek palaista ieplānota datubāzes tīrīšana.",
+            "90 dienu termiņš ir šīs platformas konfigurētais glabāšanas termiņš, nevis universāla juridiska prasība. Reālam restorānam ir jāpārbauda, vai šāds termiņš atbilst tā apstrādes nolūkiem un juridiskajiem pienākumiem. Darījumu e-pastiem un pakalpojumu sniedzēju žurnāliem var būt atsevišķi glabāšanas termiņi, kas jāpārbauda pirms reālas produkcijas ieviešanas.",
           ],
         },
         {
