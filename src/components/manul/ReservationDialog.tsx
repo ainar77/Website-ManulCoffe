@@ -907,6 +907,16 @@ export function ReservationDialog({
                 </p>
               )}
 
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {t.reservation.privacyNotice}{" "}
+                <a
+                  href={language === "lv" ? "/lv/privacy" : "/privacy"}
+                  className="font-medium underline underline-offset-4 hover:text-foreground"
+                >
+                  {t.reservation.privacyPolicy}
+                </a>
+              </p>
+
               <Button
                 type="submit"
                 variant="dark"
