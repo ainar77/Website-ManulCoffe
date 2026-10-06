@@ -48,7 +48,7 @@ function EnglishPrivacyRoute() {
       updatedDate="6 October 2026"
       intro="This policy explains what personal data is processed when you use the ManulCoffee website and submit a table reservation, why it is processed, which service providers are involved, and what rights you have."
       demoNoticeTitle="Portfolio demo notice"
-      demoNotice="ManulCoffee is a fictional portfolio concept. This website demonstrates a reusable restaurant platform and must not be treated as a production privacy policy for a real restaurant without replacing the controller details, verifying hosting and international-transfer arrangements, and implementing the retention controls described below."
+      demoNotice="ManulCoffee is a fictional portfolio concept. This website demonstrates a reusable restaurant platform and must not be treated as a production privacy policy for a real restaurant without replacing the controller details, verifying hosting and international-transfer arrangements, and verifying that the configured retention controls are appropriate for the real operator."
       homeLabel="Back to ManulCoffee"
       alternateLabel="LV"
       alternateHref="/lv/privacy"
@@ -103,8 +103,8 @@ function EnglishPrivacyRoute() {
         {
           title: "6. Retention",
           paragraphs: [
-            "The current demo does not yet perform automatic deletion of old reservation records. Records remain stored until they are manually deleted by an administrator. This is a known pre-production limitation.",
-            "Before this platform is used for real customer reservations, the operator must define a justified retention period and implement deletion or anonymisation so reservation data is not kept longer than necessary. This will be addressed in the retention stage of this project.",
+            "Reservation records stored in the Supabase database are automatically deleted when the reservation date is more than 90 days in the past. A scheduled database cleanup runs daily to enforce this retention rule.",
+            "The 90-day period is a platform retention setting, not a universal legal requirement. A real restaurant must verify that this period is appropriate for its purposes and legal obligations. Transactional emails and service-provider logs may be subject to separate retention periods and must be reviewed before a real production deployment.",
           ],
         },
         {
