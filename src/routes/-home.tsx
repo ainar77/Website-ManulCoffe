@@ -488,9 +488,20 @@ function Footer({
             © {new Date().getFullYear()} {settings?.business_name?.trim() || "ManulCoffee"}. {t.footer.rights}
           </p>
 
-          <p>
-            {t.footer.demo}
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <a
+              href={language === "lv" ? "/lv/privacy" : "/privacy"}
+              className="transition-colors hover:text-primary-foreground"
+            >
+              {t.footer.privacy}
+            </a>
+
+            <span aria-hidden="true">·</span>
+
+            <p>
+              {t.footer.demo}
+            </p>
+          </div>
         </div>
       </div>
     </footer>
