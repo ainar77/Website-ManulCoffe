@@ -89,6 +89,7 @@ function LatvianPrivacyRoute() {
         {
           title: "4. Pakalpojumu sniedzēji un datu saņēmēji",
           paragraphs: [
+            "Tīmekļvietne tiek mitināta un piegādāta, izmantojot Cloudflare Pages. Cloudflare var apstrādāt tehniskos pieprasījumu un tīkla datus, kas nepieciešami hostinga pakalpojuma nodrošināšanai, aizsardzībai un darbībai.",
             "Platforma izmanto Supabase datubāzes, autentifikācijas un servera funkciju infrastruktūrai. Rezervācijas dati tiek glabāti Supabase nodrošinātajā rezervāciju datubāzē.",
             "Platforma izmanto Resend ar rezervāciju saistītu darījumu e-pastu nosūtīšanai. E-pasta pakalpojumam tiek nodoti ziņojuma nosūtīšanai nepieciešamie dati, piemēram, viesa vārds, e-pasta adrese un rezervācijas informācija. Sākotnējā paziņojumā restorānam var tikt iekļauts arī viesa tālruņa numurs.",
             "Pilnvaroti restorāna administratori var piekļūt rezervācijas informācijai aizsargātajā administrācijas sadaļā, ciktāl tas nepieciešams rezervāciju pārvaldībai.",
@@ -97,14 +98,14 @@ function LatvianPrivacyRoute() {
         {
           title: "5. Starptautiska datu apstrāde",
           paragraphs: [
-            "Precīzs hostinga reģions, apakšapstrādātāji un starptautiskās datu nosūtīšanas kārtība ir atkarīga no operatora izmantotās Supabase un Resend konfigurācijas. Pirms reālas produkcijas ieviešanas šie iestatījumi ir jāpārbauda un jādokumentē. Ja personas dati tiek nosūtīti ārpus Eiropas Ekonomikas zonas, pārzinim jānodrošina piemērojams VDAR V nodaļas datu nosūtīšanas mehānisms un atbilstoši aizsardzības pasākumi.",
+            "Precīzas datu apstrādes vietas, apakšapstrādātāji un starptautiskās datu nosūtīšanas kārtība ir atkarīga no operatora izmantotās Cloudflare, Supabase un Resend konfigurācijas. Pirms reālas produkcijas ieviešanas šī kārtība ir jāpārbauda un jādokumentē. Ja personas dati tiek nosūtīti ārpus Eiropas Ekonomikas zonas, pārzinim jānodrošina piemērojams VDAR V nodaļas datu nosūtīšanas mehānisms un atbilstoši aizsardzības pasākumi.",
           ],
         },
         {
           title: "6. Datu glabāšanas termiņš",
           paragraphs: [
             "Supabase datubāzē glabātie rezervāciju ieraksti tiek automātiski dzēsti, kad kopš rezervācijas datuma ir pagājušas vairāk nekā 90 dienas. Šī glabāšanas noteikuma izpildei katru dienu tiek palaista ieplānota datubāzes tīrīšana.",
-            "90 dienu termiņš ir šīs platformas konfigurētais glabāšanas termiņš, nevis universāla juridiska prasība. Reālam restorānam ir jāpārbauda, vai šāds termiņš atbilst tā apstrādes nolūkiem un juridiskajiem pienākumiem. Darījumu e-pastiem un pakalpojumu sniedzēju žurnāliem var būt atsevišķi glabāšanas termiņi, kas jāpārbauda pirms reālas produkcijas ieviešanas.",
+            "90 dienu termiņš ir šīs platformas konfigurētais glabāšanas termiņš, nevis universāla juridiska prasība. Reālam restorānam ir jāpārbauda, vai šāds termiņš atbilst tā apstrādes nolūkiem un juridiskajiem pienākumiem. Viesim vai restorānam jau nosūtītie darījumu e-pasti var palikt saņēmēju pastkastēs, savukārt Cloudflare, Supabase vai Resend tehniskajiem žurnāliem var būt atsevišķi glabāšanas termiņi. Šīs atsevišķās kopijas un glabāšanas termiņi ir jāpārbauda pirms reālas produkcijas ieviešanas.",
           ],
         },
         {
@@ -116,8 +117,9 @@ function LatvianPrivacyRoute() {
         {
           title: "8. Sīkdatnes un pārlūkprogrammas krātuve",
           paragraphs: [
-            "Publiskā tīmekļvietne pārlūkprogrammas localStorage saglabā izvēlēto EN/LV valodas iestatījumu. Administrācijas sadaļā Supabase autentifikācija izmanto pārlūkprogrammas sesijas krātuvi autorizētiem administratoriem.",
-            "Atsevišķa sīkdatņu un trešo pušu tehnoloģiju pārbaude vēl ir daļa no šī projekta VDAR posma. Jebkura nākotnē pievienota nebūtiska analītikas vai izsekošanas tehnoloģija ir jāizvērtē pirms tās aktivizēšanas un, ja nepieciešams, to nedrīkst darbināt pirms derīgas piekrišanas saņemšanas.",
+            "Publiskā tīmekļvietne pārlūkprogrammas localStorage saglabā izvēlēto EN/LV valodas iestatījumu. Administrācijas sadaļā tiek izmantota pārlūkprogrammas krātuve, kas nepieciešama Supabase autentifikācijai un autorizētu administratoru pierakstīšanās sesijas uzturēšanai.",
+            "Pašreizējā publiskā tīmekļvietne neizmanto nebūtiskas reklāmas vai uzvedības analītikas tehnoloģijas, kas būtu identificētas projekta privātuma auditā. Iegultas Google Maps kartes un ārēji mitināti Google Fonts netiek automātiski ielādēti. Norāžu saite var atvērt Google Maps tikai pēc tam, kad apmeklētājs pats izvēlas sekot ārējai saitei; pēc tam ir piemērojama ārējā pakalpojuma privātuma prakse.",
+            "Ja nākotnē tiks pievienota nebūtiska analītika, reklāmas vai citas izsekošanas tehnoloģijas, to izmantošana būs jāizvērtē pirms aktivizēšanas un, ja tiesību akti pieprasa piekrišanu, tās nedrīkstēs darboties pirms derīgas piekrišanas saņemšanas.",
           ],
         },
         {
