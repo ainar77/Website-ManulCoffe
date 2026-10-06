@@ -89,6 +89,7 @@ function EnglishPrivacyRoute() {
         {
           title: "4. Service providers and recipients",
           paragraphs: [
+            "The website is hosted and delivered through Cloudflare Pages. Cloudflare may process technical request and network data as part of providing, securing and operating the hosting service.",
             "The platform uses Supabase for database, authentication and server-side function infrastructure. Reservation data is stored in the Supabase-backed reservations database.",
             "The platform uses Resend to send transactional reservation emails. Data necessary for those messages, such as the guest's name, email address and reservation details, is transmitted through the email service. The initial restaurant notification can also contain the guest's telephone number.",
             "Authorised restaurant administrators can access reservation information through the protected administration interface where required to manage bookings.",
@@ -97,14 +98,14 @@ function EnglishPrivacyRoute() {
         {
           title: "5. International processing",
           paragraphs: [
-            "The exact hosting region, subprocessors and international-transfer arrangements depend on the Supabase and Resend configuration used by the operator. These settings must be verified and documented before a real production deployment. Where personal data is transferred outside the European Economic Area, the controller must ensure that an applicable GDPR Chapter V transfer mechanism and safeguards are in place.",
+            "The exact processing locations, subprocessors and international-transfer arrangements depend on the Cloudflare, Supabase and Resend configuration used by the operator. These arrangements must be verified and documented before a real production deployment. Where personal data is transferred outside the European Economic Area, the controller must ensure that an applicable GDPR Chapter V transfer mechanism and safeguards are in place.",
           ],
         },
         {
           title: "6. Retention",
           paragraphs: [
             "Reservation records stored in the Supabase database are automatically deleted when the reservation date is more than 90 days in the past. A scheduled database cleanup runs daily to enforce this retention rule.",
-            "The 90-day period is a platform retention setting, not a universal legal requirement. A real restaurant must verify that this period is appropriate for its purposes and legal obligations. Transactional emails and service-provider logs may be subject to separate retention periods and must be reviewed before a real production deployment.",
+            "The 90-day period is a platform retention setting, not a universal legal requirement. A real restaurant must verify that this period is appropriate for its purposes and legal obligations. Transactional emails already sent to the guest or restaurant may remain in the recipients' mailboxes, and Cloudflare, Supabase or Resend technical logs may be subject to separate retention periods. Those separate copies and retention periods must be reviewed before a real production deployment.",
           ],
         },
         {
@@ -116,8 +117,9 @@ function EnglishPrivacyRoute() {
         {
           title: "8. Cookies and browser storage",
           paragraphs: [
-            "The public website stores the selected EN/LV language preference in the browser's local storage. The administration area also uses Supabase authentication session storage for signed-in administrators.",
-            "A separate cookie and third-party technology audit is still part of this project's GDPR phase. Any non-essential analytics or tracking technology added later must be assessed before it is activated and, where required, must not run before valid consent is obtained.",
+            "The public website stores the selected EN/LV language preference in the browser's local storage. The administration area also uses browser storage required by Supabase authentication to maintain signed-in administrator sessions.",
+            "The current public website does not use non-essential advertising or behavioural analytics technologies identified by the project's privacy audit. Embedded Google Maps and externally hosted Google Fonts are not loaded automatically. A directions link may open Google Maps only after the visitor chooses to follow that external link, after which the external service's own privacy practices apply.",
+            "If non-essential analytics, advertising or other tracking technologies are added later, their use must be assessed before activation and, where consent is legally required, they must not run before valid consent is obtained.",
           ],
         },
         {
