@@ -141,10 +141,10 @@ The project is being developed step by step, from a simple frontend website to a
 
 ### 12. GDPR & Privacy
 
-- [ ] Add Privacy Policy
-- [ ] Add cookie management
-- [ ] Review reservation data handling
-- [ ] Improve GDPR compliance
+- [x] Add Privacy Policy
+- [x] Add cookie management
+- [x] Review reservation data handling
+- [x] Improve GDPR compliance
 
 ### 13. Production Email & Domain
 
