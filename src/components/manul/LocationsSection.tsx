@@ -113,7 +113,7 @@ function isLocationOpen(hours: BusinessHour[]) {
 }
 
 export function LocationsSection() {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [locations, setLocations] = useState<LocationWithHours[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -222,14 +222,6 @@ export function LocationsSection() {
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
             {locations.map((location, index) => {
               const open = isLocationOpen(location.hours);
-              const localizedName =
-                language === "lv"
-                  ? location.name_lv?.trim() || location.name
-                  : location.name;
-              const localizedDescription =
-                language === "lv"
-                  ? location.description_lv?.trim() || location.description
-                  : location.description;
 
               const sortedHours = [...location.hours].sort(
                 (a, b) =>
@@ -241,7 +233,7 @@ export function LocationsSection() {
                   <div className="aspect-[16/10] overflow-hidden bg-coffee-soft">
                     <img
                       src={locationsImage}
-                      alt={`${localizedName} cafe`}
+                      alt={`${location.name} cafe`}
                       width={1600}
                       height={1008}
                       loading="lazy"
@@ -270,12 +262,12 @@ export function LocationsSection() {
                       </div>
 
                       <h3 className="font-display text-3xl font-semibold sm:text-4xl">
-                        {localizedName}
+                        {location.name}
                       </h3>
 
-                      {localizedDescription && (
+                      {location.description && (
                         <p className="mt-3 max-w-lg text-sm leading-relaxed text-primary-foreground/70">
-                          {localizedDescription}
+                          {location.description}
                         </p>
                       )}
                     </div>
@@ -307,16 +299,6 @@ export function LocationsSection() {
                       </div>
                     </div>
 
-                    {location.map_embed_url && (
-                      <iframe
-                        title={`Map for ${localizedName}`}
-                        src={location.map_embed_url}
-                        loading="lazy"
-                        className="h-48 w-full border-0 grayscale contrast-75"
-                        referrerPolicy="no-referrer-when-downgrade"
-                      />
-                    )}
-
                     {location.maps_url && (
                       <Button
                         asChild
@@ -329,7 +311,7 @@ export function LocationsSection() {
                           rel="noreferrer"
                         >
                           <Navigation />
-                          Get directions
+                          {t.locations.getDirections}
                         </a>
                       </Button>
                     )}
