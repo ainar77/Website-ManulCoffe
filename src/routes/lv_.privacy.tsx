@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { SITE_URL } from "@/lib/siteConfig";
 import { getPublicBusinessSeoData } from "@/lib/publicBusinessSeo.functions";
 import { PrivacyPage } from "./-privacy";
 
-const siteUrl = "https://website-manulcoffe.pages.dev";
 const title = "Privātuma politika — ManulCoffee";
 const description =
   "Informācija par personas datu apstrādi ManulCoffee demonstrācijas vietnē un galdiņa rezervācijas procesā.";
@@ -18,15 +18,15 @@ export const Route = createFileRoute("/lv/privacy")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: `${siteUrl}/lv/privacy` },
+      { property: "og:url", content: `${SITE_URL}/lv/privacy` },
       { property: "og:site_name", content: "ManulCoffee" },
       { property: "og:locale", content: "lv_LV" },
     ],
     links: [
-      { rel: "canonical", href: `${siteUrl}/lv/privacy` },
-      { rel: "alternate", hrefLang: "en", href: `${siteUrl}/privacy` },
-      { rel: "alternate", hrefLang: "lv", href: `${siteUrl}/lv/privacy` },
-      { rel: "alternate", hrefLang: "x-default", href: `${siteUrl}/privacy` },
+      { rel: "canonical", href: `${SITE_URL}/lv/privacy` },
+      { rel: "alternate", hrefLang: "en", href: `${SITE_URL}/privacy` },
+      { rel: "alternate", hrefLang: "lv", href: `${SITE_URL}/lv/privacy` },
+      { rel: "alternate", hrefLang: "x-default", href: `${SITE_URL}/privacy` },
     ],
   }),
   component: LatvianPrivacyRoute,
