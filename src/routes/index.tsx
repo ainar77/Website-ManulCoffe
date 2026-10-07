@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { SITE_URL } from "@/lib/siteConfig";
 import heroImage from "@/assets/manulcoffee-hero.jpg";
 import { getPublicBusinessSeoData } from "@/lib/publicBusinessSeo.functions";
 import { ManulCoffeePage, formatTime } from "./-home";
 
-const siteUrl = "https://website-manulcoffe.pages.dev";
 const title = "ManulCoffee — Specialty Coffee in Riga";
 
 const description =
   "ManulCoffee is a modern specialty coffee shop in Riga serving carefully crafted coffee, fresh pastries, and a relaxed city atmosphere.";
 
-const socialImageUrl = new URL(heroImage, siteUrl).href;
+const socialImageUrl = new URL(heroImage, SITE_URL).href;
 
 const schemaDays = [
   "https://schema.org/Monday",
@@ -60,10 +60,10 @@ function buildLocalBusinessStructuredData(
 
       return {
         "@type": "CafeOrCoffeeShop",
-        "@id": `${siteUrl}/#location-${location.id}`,
+        "@id": `${SITE_URL}/#location-${location.id}`,
         name: location.name?.trim() || businessName,
         description: location.description?.trim() || businessDescription,
-        url: `${siteUrl}/#locations`,
+        url: `${SITE_URL}/#locations`,
         image: socialImageUrl,
         telephone: location.phone?.trim() || businessPhone,
         email: businessEmail,
@@ -76,7 +76,7 @@ function buildLocalBusinessStructuredData(
         },
         openingHoursSpecification,
         acceptsReservations: true,
-        hasMenu: `${siteUrl}/#menu`,
+        hasMenu: `${SITE_URL}/#menu`,
         ...(instagramUrl ? { sameAs: [instagramUrl] } : {}),
       };
     }),
@@ -113,7 +113,7 @@ export const Route = createFileRoute("/")({
       },
       {
         property: "og:url",
-        content: `${siteUrl}/`,
+        content: `${SITE_URL}/`,
       },
       {
         property: "og:site_name",
@@ -157,10 +157,10 @@ export const Route = createFileRoute("/")({
       },
     ],
     links: [
-      { rel: "canonical", href: `${siteUrl}/` },
-      { rel: "alternate", hrefLang: "en", href: `${siteUrl}/` },
-      { rel: "alternate", hrefLang: "lv", href: `${siteUrl}/lv` },
-      { rel: "alternate", hrefLang: "x-default", href: `${siteUrl}/` },
+      { rel: "canonical", href: `${SITE_URL}/` },
+      { rel: "alternate", hrefLang: "en", href: `${SITE_URL}/` },
+      { rel: "alternate", hrefLang: "lv", href: `${SITE_URL}/lv` },
+      { rel: "alternate", hrefLang: "x-default", href: `${SITE_URL}/` },
     ],
     scripts: structuredData
       ? [
