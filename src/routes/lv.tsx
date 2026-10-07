@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { SITE_URL } from "@/lib/siteConfig";
 import heroImage from "@/assets/manulcoffee-hero.jpg";
 import { getPublicBusinessSeoData } from "@/lib/publicBusinessSeo.functions";
 import { ManulCoffeePage, formatTime } from "./-home";
 
-const siteUrl = "https://website-manulcoffe.pages.dev";
 const title = "ManulCoffee — Specializētā kafija Rīgā";
 const description =
   "ManulCoffee ir mūsdienīga specializētās kafijas vieta Rīgā ar rūpīgi pagatavotu kafiju, svaigiem konditorejas izstrādājumiem un nesteidzīgu pilsētas atmosfēru.";
-const socialImageUrl = new URL(heroImage, siteUrl).href;
+const socialImageUrl = new URL(heroImage, SITE_URL).href;
 
 const schemaDays = [
   "https://schema.org/Monday",
@@ -60,7 +60,7 @@ function buildLocalBusinessStructuredData(
 
       return {
         "@type": "CafeOrCoffeeShop",
-        "@id": `${siteUrl}/lv#location-${location.id}`,
+        "@id": `${SITE_URL}/lv#location-${location.id}`,
         name:
           location.name_lv?.trim() ||
           location.name?.trim() ||
@@ -69,7 +69,7 @@ function buildLocalBusinessStructuredData(
           location.description_lv?.trim() ||
           location.description?.trim() ||
           businessDescription,
-        url: `${siteUrl}/lv#locations`,
+        url: `${SITE_URL}/lv#locations`,
         image: socialImageUrl,
         telephone: location.phone?.trim() || businessPhone,
         email: businessEmail,
@@ -82,7 +82,7 @@ function buildLocalBusinessStructuredData(
         },
         openingHoursSpecification,
         acceptsReservations: true,
-        hasMenu: `${siteUrl}/lv#menu`,
+        hasMenu: `${SITE_URL}/lv#menu`,
         ...(instagramUrl ? { sameAs: [instagramUrl] } : {}),
       };
     }),
@@ -102,7 +102,7 @@ export const Route = createFileRoute("/lv")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
-        { property: "og:url", content: `${siteUrl}/lv` },
+        { property: "og:url", content: `${SITE_URL}/lv` },
         { property: "og:site_name", content: "ManulCoffee" },
         { property: "og:locale", content: "lv_LV" },
         { property: "og:image", content: socialImageUrl },
@@ -118,10 +118,10 @@ export const Route = createFileRoute("/lv")({
         { name: "twitter:image", content: socialImageUrl },
       ],
       links: [
-        { rel: "canonical", href: `${siteUrl}/lv` },
-        { rel: "alternate", hrefLang: "en", href: `${siteUrl}/` },
-        { rel: "alternate", hrefLang: "lv", href: `${siteUrl}/lv` },
-        { rel: "alternate", hrefLang: "x-default", href: `${siteUrl}/` },
+        { rel: "canonical", href: `${SITE_URL}/lv` },
+        { rel: "alternate", hrefLang: "en", href: `${SITE_URL}/` },
+        { rel: "alternate", hrefLang: "lv", href: `${SITE_URL}/lv` },
+        { rel: "alternate", hrefLang: "x-default", href: `${SITE_URL}/` },
       ],
       scripts: structuredData
         ? [
