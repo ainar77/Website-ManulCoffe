@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { SITE_URL } from "@/lib/siteConfig";
 import { getPublicBusinessSeoData } from "@/lib/publicBusinessSeo.functions";
 import { PrivacyPage } from "./-privacy";
 
-const siteUrl = "https://website-manulcoffe.pages.dev";
 const title = "Privacy Policy — ManulCoffee";
 const description =
   "Learn how the ManulCoffee demo website processes reservation and website data.";
@@ -18,15 +18,15 @@ export const Route = createFileRoute("/privacy")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: `${siteUrl}/privacy` },
+      { property: "og:url", content: `${SITE_URL}/privacy` },
       { property: "og:site_name", content: "ManulCoffee" },
       { property: "og:locale", content: "en_US" },
     ],
     links: [
-      { rel: "canonical", href: `${siteUrl}/privacy` },
-      { rel: "alternate", hrefLang: "en", href: `${siteUrl}/privacy` },
-      { rel: "alternate", hrefLang: "lv", href: `${siteUrl}/lv/privacy` },
-      { rel: "alternate", hrefLang: "x-default", href: `${siteUrl}/privacy` },
+      { rel: "canonical", href: `${SITE_URL}/privacy` },
+      { rel: "alternate", hrefLang: "en", href: `${SITE_URL}/privacy` },
+      { rel: "alternate", hrefLang: "lv", href: `${SITE_URL}/lv/privacy` },
+      { rel: "alternate", hrefLang: "x-default", href: `${SITE_URL}/privacy` },
     ],
   }),
   component: EnglishPrivacyRoute,
