@@ -1,3 +1,4 @@
+
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const RESEND_FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL");
 const RESTAURANT_NOTIFICATION_EMAIL = Deno.env.get(
@@ -9,6 +10,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+// Escape user-provided values before inserting them into HTML emails.
+function escapeHtml(value: unknown): string {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -65,6 +76,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Prepare safe text values for HTML templates.
+    const safeCustomerName = escapeHtml(customerName);
+    const safeEmail = escapeHtml(email);
+    const safePhone = escapeHtml(phone);
+    const safeLocation = escapeHtml(location);
+    const safeDate = escapeHtml(date);
+    const safeTime = escapeHtml(time);
+    const safeGuests = escapeHtml(guests);
+
     const customerResponse = await fetch(
       "https://api.resend.com/emails",
       {
@@ -81,15 +101,15 @@ Deno.serve(async (req: Request) => {
             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
               <h2>ManulCoffee reservation received</h2>
 
-              <p>Hello ${customerName},</p>
+              <p>Hello ${safeCustomerName},</p>
 
               <p>We received your reservation request.</p>
 
               <p>
-                <strong>Location:</strong> ${location}<br>
-                <strong>Date:</strong> ${date}<br>
-                <strong>Time:</strong> ${time}<br>
-                <strong>Guests:</strong> ${guests}<br>
+                <strong>Location:</strong> ${safeLocation}<br>
+                <strong>Date:</strong> ${safeDate}<br>
+                <strong>Time:</strong> ${safeTime}<br>
+                <strong>Guests:</strong> ${safeGuests}<br>
                 <strong>Status:</strong> Pending
               </p>
 
@@ -138,13 +158,13 @@ Deno.serve(async (req: Request) => {
               <h2>New ManulCoffee reservation</h2>
 
               <p>
-                <strong>Customer:</strong> ${customerName}<br>
-                <strong>Email:</strong> ${email}<br>
-                <strong>Phone:</strong> ${phone}<br>
-                <strong>Location:</strong> ${location}<br>
-                <strong>Date:</strong> ${date}<br>
-                <strong>Time:</strong> ${time}<br>
-                <strong>Guests:</strong> ${guests}<br>
+                <strong>Customer:</strong> ${safeCustomerName}<br>
+                <strong>Email:</strong> ${safeEmail}<br>
+                <strong>Phone:</strong> ${safePhone}<br>
+                <strong>Location:</strong> ${safeLocation}<br>
+                <strong>Date:</strong> ${safeDate}<br>
+                <strong>Time:</strong> ${safeTime}<br>
+                <strong>Guests:</strong> ${safeGuests}<br>
                 <strong>Status:</strong> Pending
               </p>
             </div>
