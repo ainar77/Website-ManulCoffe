@@ -249,6 +249,9 @@ function AdminPage() {
           "send-reservation-status-email",
           {
             body: {
+              // Included for the secured Edge Function. Existing fields are kept
+              // temporarily for compatibility during the deployment transition.
+              reservationId: reservation.id,
               customerName: reservation.customer_name,
               email: reservation.email,
               location: reservation.location,
