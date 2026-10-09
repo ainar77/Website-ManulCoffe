@@ -7,6 +7,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function escapeHtml(value: unknown): string {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
@@ -103,19 +112,19 @@ Deno.serve(async (req: Request) => {
             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
               <h2>${heading}</h2>
 
-              <p>Hello ${customerName},</p>
+              <p>Hello ${escapeHtml(customerName)},</p>
 
-              <p>${message}</p>
+<p>${message}</p>
 
-              <p>
-                <strong>Location:</strong> ${location}<br>
-                <strong>Date:</strong> ${date}<br>
-                <strong>Time:</strong> ${time}<br>
-                <strong>Guests:</strong> ${guests}<br>
-                <strong>Status:</strong> ${
-                  isConfirmed ? "Confirmed" : "Cancelled"
-                }
-              </p>
+<p>
+  <strong>Location:</strong> ${escapeHtml(location)}<br>
+  <strong>Date:</strong> ${escapeHtml(date)}<br>
+  <strong>Time:</strong> ${escapeHtml(time)}<br>
+  <strong>Guests:</strong> ${escapeHtml(guests)}<br>
+  <strong>Status:</strong> ${
+    isConfirmed ? "Confirmed" : "Cancelled"
+  }
+</p>
 
               <p>ManulCoffee</p>
             </div>
